@@ -1,0 +1,34 @@
+[gd_scene format=3 uid="uid://bs1l51fnpfjmy"]
+
+[ext_resource type="Script" uid="uid://cuvpc8rad2s7" path="res://player.gd" id="1_a202f"]
+[ext_resource type="Script" uid="uid://dww8t6ccspco4" path="res://map.gd" id="1_noarx"]
+[ext_resource type="Script" uid="uid://k2l4df4cg5wu" path="res://weapon_manager.gd" id="3_a0tk4"]
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_lm7sh"]
+radius = 0.265625
+
+[sub_resource type="CameraAttributesPractical" id="CameraAttributesPractical_a202f"]
+exposure_multiplier = 4.052
+auto_exposure_enabled = true
+dof_blur_near_enabled = true
+
+[node name="Node3D" type="Node3D" unique_id=1340547516]
+script = ExtResource("1_noarx")
+
+[node name="CharacterBody3D" type="CharacterBody3D" parent="." unique_id=854468863]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.6424427, 2.5144236, 0)
+script = ExtResource("1_a202f")
+
+[node name="Node" type="Node" parent="CharacterBody3D" unique_id=1999818498]
+script = ExtResource("3_a0tk4")
+
+[node name="Camera3D" type="Camera3D" parent="CharacterBody3D" unique_id=1003027461]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.6108109, 0)
+
+[node name="RayCast3D" type="RayCast3D" parent="CharacterBody3D/Camera3D" unique_id=182797277]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="CharacterBody3D" unique_id=1629172255]
+shape = SubResource("CapsuleShape3D_lm7sh")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=97521516]
+camera_attributes = SubResource("CameraAttributesPractical_a202f")

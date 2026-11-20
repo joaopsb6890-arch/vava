@@ -1,0 +1,523 @@
+[remap]
+
+importer="scene"
+importer_version=1
+type="PackedScene"
+uid="uid://cvfcx4h1eexe3"
+path="res://.godot/imported/Site C haven.fbx-095f3e92cba449e59afb3e1bfa4d14cd.scn"
+
+[deps]
+
+source_file="res://source/Site C haven.fbx"
+dest_files=["res://.godot/imported/Site C haven.fbx-095f3e92cba449e59afb3e1bfa4d14cd.scn"]
+
+[params]
+
+nodes/root_type=""
+nodes/root_name=""
+nodes/root_script=null
+mesh_library/use_node_names_as_mesh_names=false
+array_mesh/deduplicate_surfaces=true
+nodes/apply_root_scale=true
+nodes/root_scale=1.0
+nodes/import_as_skeleton_bones=false
+nodes/use_name_suffixes=true
+nodes/use_node_type_suffixes=true
+meshes/ensure_tangents=true
+meshes/generate_lods=true
+meshes/create_shadow_meshes=true
+meshes/light_baking=1
+meshes/lightmap_texel_size=0.2
+meshes/force_disable_compression=false
+skins/use_named_skins=true
+animation/import=true
+animation/fps=30
+animation/trimming=true
+animation/remove_immutable_tracks=true
+animation/import_rest_as_RESET=false
+import_script/path=""
+materials/extract=0
+materials/extract_format=0
+materials/extract_path=""
+_subresources={
+"nodes": {
+"PATH:Assets/Capteur": {
+"generate/physics": true
+},
+"PATH:Assets/Capteur1": {
+"generate/physics": true
+},
+"PATH:Assets/Clim": {
+"generate/physics": true
+},
+"PATH:Assets/box__1__pCube10": {
+"generate/physics": true
+},
+"PATH:Assets/cableelectrique/pCube1446": {
+"generate/physics": true
+},
+"PATH:Assets/lampe1": {
+"generate/physics": true
+},
+"PATH:Assets/lampe2": {
+"generate/physics": true
+},
+"PATH:Assets/pCube10": {
+"generate/physics": true
+},
+"PATH:Assets/pCube1438": {
+"generate/physics": true
+},
+"PATH:Assets/pCube1440": {
+"generate/physics": true
+},
+"PATH:Assets/pCube1441": {
+"generate/physics": true
+},
+"PATH:Assets/pCube1442": {
+"generate/physics": true
+},
+"PATH:Assets/pCube1443": {
+"generate/physics": true
+},
+"PATH:Assets/pCube1447": {
+"generate/physics": true
+},
+"PATH:Assets/pCube1448": {
+"generate/physics": true
+},
+"PATH:Assets/pCube1449": {
+"generate/physics": true
+},
+"PATH:Assets/pCube1459": {
+"generate/physics": true
+},
+"PATH:Assets/pCylinder41": {
+"generate/physics": true
+},
+"PATH:Assets/plache": {
+"generate/physics": true
+},
+"PATH:Assets/plache1": {
+"generate/physics": true
+},
+"PATH:Assets/plache2": {
+"generate/physics": true
+},
+"PATH:Maison1/Porte2_pCube131": {
+"generate/physics": true
+},
+"PATH:Maison1/Toiture1/pCube202": {
+"generate/physics": true
+},
+"PATH:Maison1/Toiture1/pCube218": {
+"generate/physics": true
+},
+"PATH:Maison1/Toiture1/pCube219": {
+"generate/physics": true
+},
+"PATH:Maison1/Toiture1/pCube220": {
+"generate/physics": true
+},
+"PATH:Maison1/Toiture1/pCube221": {
+"generate/physics": true
+},
+"PATH:Maison1/Toiture1/pCube222": {
+"generate/physics": true
+},
+"PATH:Maison1/Toiture1/pCube224": {
+"generate/physics": true
+},
+"PATH:Maison1/Toiture1/pCube230": {
+"generate/physics": true
+},
+"PATH:Maison1/Toiture1/pCube230/pCube339": {
+"generate/physics": true
+},
+"PATH:Maison1/pCube1411": {
+"generate/physics": true
+},
+"PATH:Maison1/pCube1412": {
+"generate/physics": true
+},
+"PATH:Maison1/pCube1437": {
+"generate/physics": true
+},
+"PATH:Maison1/pCube153": {
+"generate/physics": true
+},
+"PATH:Maison1/pCube154": {
+"generate/physics": true
+},
+"PATH:Maison1/pCube155": {
+"generate/physics": true
+},
+"PATH:Maison1/pCube156": {
+"generate/physics": true
+},
+"PATH:Maison1/pCube157": {
+"generate/physics": true
+},
+"PATH:Maison1/pCube159": {
+"generate/physics": true
+},
+"PATH:Maison1/pCube160": {
+"generate/physics": true
+},
+"PATH:Maison1/pCube161": {
+"generate/physics": true
+},
+"PATH:Maison1/pCube162": {
+"generate/physics": true
+},
+"PATH:Maison1/pCube163": {
+"generate/physics": true
+},
+"PATH:Maison1/pCube164": {
+"generate/physics": true
+},
+"PATH:Maison1/pCube166": {
+"generate/physics": true
+},
+"PATH:Maison1/pCube167": {
+"generate/physics": true
+},
+"PATH:Maison1/pCube168": {
+"generate/physics": true
+},
+"PATH:Maison1/pCube201": {
+"generate/physics": true
+},
+"PATH:Maison1/pCube43": {
+"generate/physics": true
+},
+"PATH:Maison2/Toiture2/pCube231": {
+"generate/physics": true
+},
+"PATH:Maison2/Toiture2/pCube232": {
+"generate/physics": true
+},
+"PATH:Maison2/Toiture2/pCube233": {
+"generate/physics": true
+},
+"PATH:Maison2/Toiture2/pCube234": {
+"generate/physics": true
+},
+"PATH:Maison2/Toiture2/pCube237/pCube447": {
+"generate/physics": true
+},
+"PATH:Maison2/null2_pCube61": {
+"generate/physics": true
+},
+"PATH:Maison2/pCube104": {
+"generate/physics": true
+},
+"PATH:Maison2/pCube146": {
+"generate/physics": true
+},
+"PATH:Maison2/pCube147": {
+"generate/physics": true
+},
+"PATH:Maison2/pCube148": {
+"generate/physics": true
+},
+"PATH:Maison2/pCube149": {
+"generate/physics": true
+},
+"PATH:Maison2/pCube150": {
+"generate/physics": true
+},
+"PATH:Maison2/pCube151": {
+"generate/physics": true
+},
+"PATH:Maison2/pCube44": {
+"generate/physics": true
+},
+"PATH:Maison2/pCube63": {
+"generate/physics": true
+},
+"PATH:Maison2/pCube69": {
+"generate/physics": true
+},
+"PATH:Maison2/pCube70": {
+"generate/physics": true
+},
+"PATH:Maison2/pCube72": {
+"generate/physics": true
+},
+"PATH:Maison3/Toiture9": {
+"generate/physics": true
+},
+"PATH:Maison3/Toiture9/pCube640": {
+"generate/physics": true
+},
+"PATH:Maison3/pCube102": {
+"generate/physics": true
+},
+"PATH:Maison3/pCube105": {
+"generate/physics": true
+},
+"PATH:Maison3/pCube106": {
+"generate/physics": true
+},
+"PATH:Maison3/pCube108": {
+"generate/physics": true
+},
+"PATH:Maison3/pCube109": {
+"generate/physics": true
+},
+"PATH:Maison3/pCube110": {
+"generate/physics": true
+},
+"PATH:Maison3/pCube111": {
+"generate/physics": true
+},
+"PATH:Maison3/pCube112": {
+"generate/physics": true
+},
+"PATH:Maison3/pCube113": {
+"generate/physics": true
+},
+"PATH:Maison3/pCube114": {
+"generate/physics": true
+},
+"PATH:Maison3/pCube115": {
+"generate/physics": true
+},
+"PATH:Maison3/pCube117": {
+"generate/physics": true
+},
+"PATH:Maison3/pCube118": {
+"generate/physics": true
+},
+"PATH:Maison3/pCube119": {
+"generate/physics": true
+},
+"PATH:Maison3/pCube120": {
+"generate/physics": true
+},
+"PATH:Maison3/pCube121": {
+"generate/physics": true
+},
+"PATH:Maison3/pCube123": {
+"generate/physics": true
+},
+"PATH:Maison3/pCube124": {
+"generate/physics": true
+},
+"PATH:Maison3/pCube125": {
+"generate/physics": true
+},
+"PATH:Maison3/pCube126": {
+"generate/physics": true
+},
+"PATH:Maison3/pCube127": {
+"generate/physics": true
+},
+"PATH:Maison3/pCube128": {
+"generate/physics": true
+},
+"PATH:Maison3/pCube132": {
+"generate/physics": true
+},
+"PATH:Maison3/pCube1414": {
+"generate/physics": true
+},
+"PATH:Maison3/pCube41": {
+"generate/physics": true
+},
+"PATH:Maison4/Toiture3": {
+"generate/physics": true
+},
+"PATH:Maison4/Toiture3/pCube1098": {
+"generate/physics": true
+},
+"PATH:Maison4/pCube122": {
+"generate/physics": true
+},
+"PATH:Maison4/pCube133": {
+"generate/physics": true
+},
+"PATH:Maison4/pCube1413": {
+"generate/physics": true
+},
+"PATH:Maison4/pCube45": {
+"generate/physics": true
+},
+"PATH:Maison5/pCube134": {
+"generate/physics": true
+},
+"PATH:Maison5/pCube253": {
+"generate/physics": true
+},
+"PATH:Maison5/pCube254": {
+"generate/physics": true
+},
+"PATH:Maison5/pCube255": {
+"generate/physics": true
+},
+"PATH:Maison5/pCube33": {
+"generate/physics": true
+},
+"PATH:Maison5/tuile1_tuile1": {
+"generate/physics": true
+},
+"PATH:Maison6/Toiture5": {
+"generate/physics": true
+},
+"PATH:Maison6/Toiture5/pCube1171": {
+"generate/physics": true
+},
+"PATH:Maison6/pCube101": {
+"generate/physics": true
+},
+"PATH:Maison6/pCube103": {
+"generate/physics": true
+},
+"PATH:Maison6/pCube135": {
+"generate/physics": true
+},
+"PATH:Maison6/pCube136": {
+"generate/physics": true
+},
+"PATH:Maison6/pCube137": {
+"generate/physics": true
+},
+"PATH:Maison6/pCube138": {
+"generate/physics": true
+},
+"PATH:Maison6/pCube139": {
+"generate/physics": true
+},
+"PATH:Maison6/pCube140": {
+"generate/physics": true
+},
+"PATH:Maison6/pCube40": {
+"generate/physics": true
+},
+"PATH:Maison6/pCube57": {
+"generate/physics": true
+},
+"PATH:Maison7/Toiture6": {
+"generate/physics": true
+},
+"PATH:Maison7/Toiture7": {
+"generate/physics": true
+},
+"PATH:Maison7/Toiture8": {
+"generate/physics": true
+},
+"PATH:Maison7/pCube100": {
+"generate/physics": true
+},
+"PATH:Maison7/pCube141": {
+"generate/physics": true
+},
+"PATH:Maison7/pCube142": {
+"generate/physics": true
+},
+"PATH:Maison7/pCube143": {
+"generate/physics": true
+},
+"PATH:Maison7/pCube144": {
+"generate/physics": true
+},
+"PATH:Maison7/pCube145": {
+"generate/physics": true
+},
+"PATH:Maison7/pCube238": {
+"generate/physics": true
+},
+"PATH:Maison7/pCube239": {
+"generate/physics": true
+},
+"PATH:Maison7/pCube240": {
+"generate/physics": true
+},
+"PATH:Maison7/pCube29": {
+"generate/physics": true
+},
+"PATH:Maison7/pCube30": {
+"generate/physics": true
+},
+"PATH:Maison7/pCube32": {
+"generate/physics": true
+},
+"PATH:Maison7/pCube73": {
+"generate/physics": true
+},
+"PATH:Maison7/pCube79": {
+"generate/physics": true
+},
+"PATH:Maison7/pCube80": {
+"generate/physics": true
+},
+"PATH:Maison7/pCube81": {
+"generate/physics": true
+},
+"PATH:Maison7/pCube82": {
+"generate/physics": true
+},
+"PATH:Maison7/pCube83": {
+"generate/physics": true
+},
+"PATH:Maison7/pCube84": {
+"generate/physics": true
+},
+"PATH:Maison7/pCube87": {
+"generate/physics": true
+},
+"PATH:Maison7/pCube88": {
+"generate/physics": true
+},
+"PATH:Maison7/pCube89": {
+"generate/physics": true
+},
+"PATH:Maison7/pCube90": {
+"generate/physics": true
+},
+"PATH:Maison7/pCube91": {
+"generate/physics": true
+},
+"PATH:Maison7/pCube92": {
+"generate/physics": true
+},
+"PATH:Maison7/pCube93": {
+"generate/physics": true
+},
+"PATH:Maison7/pCube94": {
+"generate/physics": true
+},
+"PATH:Maison7/pCube95": {
+"generate/physics": true
+},
+"PATH:Maison7/pCube96": {
+"generate/physics": true
+},
+"PATH:Maison7/pCube97": {
+"generate/physics": true
+},
+"PATH:Maison7/pCube98": {
+"generate/physics": true
+},
+"PATH:Maison7/pCube99": {
+"generate/physics": true
+},
+"PATH:Murs": {
+"generate/physics": true
+},
+"PATH:Sols/sols": {
+"generate/physics": true
+},
+"PATH:Sols/sols2": {
+"generate/physics": true
+},
+"PATH:Sols/sols3": {
+"generate/physics": true
+}
+}
+}
+fbx/importer=0
+fbx/allow_geometry_helper_nodes=false
+fbx/embedded_image_handling=1
+fbx/naming_version=2
