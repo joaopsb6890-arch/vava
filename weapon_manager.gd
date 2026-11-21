@@ -36,7 +36,9 @@ extends Node
 @export var knife_axis_correction := Vector3.ZERO  # correção extra em graus (X, Y, Z)
 
 @export_group("Geral")
-@export_enum("Vandal", "Faca") var start_weapon := 0
+@export_group("Loja")
+@export var primary_id := "vandal"
+@export var secondary_id := "classic"
 @export var hide_jett_hands := true          # esconde as mãos procedurais do Jett com arma
 @export var head_height := 1.45              # y acima dos pés = headshot
 @export var leg_height := 0.55               # y abaixo disto = pernas
@@ -98,6 +100,8 @@ class WeaponDef extends RefCounted:
 	var pos := Vector3.ZERO
 	var rot := Vector3.ZERO
 	var flip := false
+	var price := 0
+	var slot_kind := "primary"
 	var model_rotation_deg := Vector3.ZERO
 	var muzzle := Vector3.ZERO
 	var longest := 1.0
@@ -116,6 +120,10 @@ class WeaponDef extends RefCounted:
 var jett
 var cam: Camera3D
 var defs: Array[WeaponDef] = []
+var defs_by_id := {}
+var slots: Array = []          # índices em defs: primária, secundária, faca
+var loadout_primary := ""
+var loadout_secondary := "classic"
 var cur := 0
 var ready_ok := false
 var started := false
@@ -183,33 +191,61 @@ func _ready():
 		jett.died.connect(_on_player_died)
 
 	ready_ok = true
-	select_weapon(start_weapon, true)
+	give(primary_id, secondary_id, true)
 
 func _build_defs():
-	var v := WeaponDef.new()
-	v.id = "vandal"
-	v.display_name = "VANDAL"
-	v.path = vandal_path
-	v.tex_prefix = vandal_texture_prefix
-	v.auto = true
-	v.rate = vandal_rate
-	v.dmg_head = vandal_damage_head
-	v.dmg_body = vandal_damage_body
-	v.dmg_leg = vandal_damage_leg
-	v.mag_size = vandal_mag
-	v.mag = vandal_mag
-	v.reserve_size = vandal_reserve
-	v.reserve = vandal_reserve
-	v.reload_time = vandal_reload_time
-	v.equip_time = vandal_equip_time
-	v.length = vandal_length
-	v.pos = vandal_pos
-	v.rot = vandal_rot
-	v.flip = vandal_flip
-	v.model_rotation_deg = vandal_axis_correction
-	v.muzzle = vandal_muzzle
-	v.recoil = _make_recoil(vandal_mag)
-	defs.append(v)
+	defs.clear()
+	defs_by_id.clear()
+
+	_gun("classic", "CLASSIC", {
+		"slot": "secondary", "auto": false, "rate": 6.75, "head": 78.0, "body": 26.0, "leg": 22.0,
+		"mag": 12, "reserve": 36, "reload": 1.75, "equip": 0.5, "range": 120.0,
+		"spread_base": 0.5, "spread_move": 2.4, "spread_air": 3.0, "spread_burst": 0.2,
+		"length": 0.44, "pos": Vector3(0.28, -0.24, -0.62), "rot": Vector3(0.0, -6.0, -2.0),
+		"muzzle": Vector3(0.14, -0.13, -0.62), "price": 0,
+	})
+
+	_gun("sheriff", "SHERIFF", {
+		"slot": "secondary", "auto": false, "rate": 4.0, "head": 159.0, "body": 55.0, "leg": 46.0,
+		"mag": 6, "reserve": 24, "reload": 2.25, "equip": 0.6, "range": 200.0,
+		"spread_base": 0.25, "spread_move": 2.8, "spread_air": 4.0, "spread_burst": 0.35,
+		"length": 0.52, "pos": Vector3(0.28, -0.24, -0.64), "rot": Vector3(0.0, -6.0, -2.0),
+		"muzzle": Vector3(0.16, -0.14, -0.70), "price": 800,
+	})
+
+	_gun("spectre", "SPECTRE", {
+		"slot": "primary", "auto": true, "rate": 13.33, "head": 78.0, "body": 26.0, "leg": 22.0,
+		"mag": 30, "reserve": 60, "reload": 2.25, "equip": 0.7, "range": 250.0,
+		"spread_base": 0.2, "spread_move": 2.0, "spread_air": 3.0, "spread_burst": 0.06,
+		"length": 0.68, "pos": Vector3(0.30, -0.25, -0.70), "rot": Vector3(0.0, -8.0, -3.0),
+		"muzzle": Vector3(0.17, -0.15, -0.86), "price": 1600,
+	})
+
+	_gun("vandal", "VANDAL", {
+		"slot": "primary", "path": vandal_path, "tex": vandal_texture_prefix,
+		"auto": true, "rate": vandal_rate, "head": vandal_damage_head, "body": vandal_damage_body,
+		"leg": vandal_damage_leg, "mag": vandal_mag, "reserve": vandal_reserve,
+		"reload": vandal_reload_time, "equip": vandal_equip_time, "range": 300.0,
+		"spread_base": 0.0, "spread_move": 2.6, "spread_air": 4.0, "spread_burst": 0.05,
+		"length": vandal_length, "pos": vandal_pos, "rot": vandal_rot, "flip": vandal_flip,
+		"muzzle": vandal_muzzle, "price": 2900, "axis": vandal_axis_correction,
+	})
+
+	_gun("phantom", "PHANTOM", {
+		"slot": "primary", "auto": true, "rate": 11.0, "head": 156.0, "body": 39.0, "leg": 33.0,
+		"mag": 30, "reserve": 60, "reload": 2.5, "equip": 0.8, "range": 300.0,
+		"spread_base": 0.0, "spread_move": 2.2, "spread_air": 4.0, "spread_burst": 0.04,
+		"length": 1.0, "pos": Vector3(0.30, -0.25, -0.72), "rot": Vector3(0.0, -8.0, -3.0),
+		"muzzle": Vector3(0.2, -0.17, -1.10), "price": 2900,
+	})
+
+	_gun("operator", "OPERATOR", {
+		"slot": "primary", "auto": false, "rate": 0.6, "head": 255.0, "body": 150.0, "leg": 120.0,
+		"mag": 5, "reserve": 10, "reload": 3.7, "equip": 1.2, "range": 500.0,
+		"spread_base": 0.0, "spread_move": 6.0, "spread_air": 9.0, "spread_burst": 0.0,
+		"length": 1.35, "pos": Vector3(0.32, -0.26, -0.78), "rot": Vector3(0.0, -8.0, -3.0),
+		"muzzle": Vector3(0.2, -0.16, -1.40), "price": 4700,
+	})
 
 	var k := WeaponDef.new()
 	k.id = "knife"
@@ -217,6 +253,7 @@ func _build_defs():
 	k.path = knife_path
 	k.tex_prefix = knife_texture_prefix
 	k.melee = true
+	k.slot_kind = "melee"
 	k.dmg_body = knife_damage_light
 	k.dmg_heavy = knife_damage_heavy
 	k.equip_time = 0.35
@@ -226,8 +263,99 @@ func _build_defs():
 	k.flip = knife_flip
 	k.model_rotation_deg = knife_axis_correction
 	defs.append(k)
+	defs_by_id["knife"] = k
 
-# Padrão de recuo do Vandal: sobe depressa e depois abana para os lados
+func _gun(id: String, display: String, cfg: Dictionary) -> WeaponDef:
+	var w := WeaponDef.new()
+	w.id = id
+	w.display_name = display
+	w.path = str(cfg.get("path", ""))
+	w.tex_prefix = str(cfg.get("tex", ""))
+	w.auto = bool(cfg.get("auto", true))
+	w.rate = float(cfg.get("rate", 10.0))
+	w.dmg_head = float(cfg.get("head", 150.0))
+	w.dmg_body = float(cfg.get("body", 40.0))
+	w.dmg_leg = float(cfg.get("leg", 34.0))
+	w.range_m = float(cfg.get("range", 300.0))
+	w.mag_size = int(cfg.get("mag", 25))
+	w.mag = w.mag_size
+	w.reserve_size = int(cfg.get("reserve", 50))
+	w.reserve = w.reserve_size
+	w.reload_time = float(cfg.get("reload", 2.5))
+	w.equip_time = float(cfg.get("equip", 0.7))
+	w.spread_base = float(cfg.get("spread_base", 0.0))
+	w.spread_move = float(cfg.get("spread_move", 2.6))
+	w.spread_air = float(cfg.get("spread_air", 4.0))
+	w.spread_burst = float(cfg.get("spread_burst", 0.05))
+	w.length = float(cfg.get("length", 0.9))
+	w.pos = cfg.get("pos", Vector3(0.30, -0.25, -0.72))
+	w.rot = cfg.get("rot", Vector3(0.0, -8.0, -3.0))
+	w.muzzle = cfg.get("muzzle", Vector3(0.2, -0.17, -1.08))
+	w.flip = bool(cfg.get("flip", false))
+	w.price = int(cfg.get("price", 0))
+	w.slot_kind = str(cfg.get("slot", "primary"))
+	w.model_rotation_deg = cfg.get("axis", Vector3.ZERO)
+	w.recoil = _make_recoil(w.mag_size)
+	defs.append(w)
+	defs_by_id[id] = w
+	return w
+
+# ==================================================
+# LOADOUT / LOJA
+# ==================================================
+
+func _index_of(id: String) -> int:
+	for i in range(defs.size()):
+		if defs[i].id == id:
+			return i
+	return -1
+
+func _current() -> WeaponDef:
+	if slots.is_empty():
+		return defs[0]
+	return defs[slots[clampi(cur, 0, slots.size() - 1)]]
+
+func current_name() -> String:
+	return _current().display_name
+
+func current_id() -> String:
+	return _current().id
+
+func give(primary: String, secondary: String, refill := true) -> void:
+	loadout_primary = primary
+	loadout_secondary = secondary
+	slots = []
+	var p := _index_of(primary)
+	if p >= 0:
+		slots.append(p)
+	var s := _index_of(secondary)
+	if s < 0:
+		s = _index_of("classic")
+	if s >= 0:
+		slots.append(s)
+	var k := _index_of("knife")
+	if k >= 0:
+		slots.append(k)
+	if refill:
+		refill_all()
+	select_slot(0, true)
+
+func refill_all() -> void:
+	for w in defs:
+		w.mag = w.mag_size
+		w.reserve = w.reserve_size
+	reloading = false
+	_cancel_melee()
+	fire_blocked = true
+
+func get_buy_list() -> Array:
+	var out: Array = []
+	for w in defs:
+		if w.melee or w.price <= 0:
+			continue
+		out.append({"id": w.id, "name": w.display_name, "price": w.price, "slot": w.slot_kind})
+	return out
+
 func _make_recoil(n: int) -> Array:
 	var a := []
 	for i in range(maxi(n, 1)):
@@ -253,7 +381,8 @@ func _add_keys(action: String, keys: Array):
 
 func _setup_inputs():
 	_add_keys("weapon_1", [KEY_1])
-	_add_keys("weapon_2", [KEY_2, KEY_3])
+	_add_keys("weapon_2", [KEY_2])
+	_add_keys("weapon_3", [KEY_3])
 	_add_keys("reload", [KEY_R])
 	_add_keys("tune_weapons", [KEY_F2])
 	# garantir que existem (o Jett também os cria)
@@ -270,9 +399,9 @@ func _input(event):
 		sway_target.y = clampf(sway_target.y + event.relative.y * 0.0006, -0.07, 0.07)
 	elif event is InputEventMouseButton and event.pressed and captured:
 		if event.button_index == MOUSE_BUTTON_WHEEL_UP:
-			select_weapon(cur - 1)
+			select_slot(cur - 1)
 		elif event.button_index == MOUSE_BUTTON_WHEEL_DOWN:
-			select_weapon(cur + 1)
+			select_slot(cur + 1)
 
 	if event.is_action_pressed("tune_weapons"):
 		tune = not tune
@@ -281,7 +410,7 @@ func _input(event):
 			jett.toast("AFINAÇÃO %s" % ("ON" if tune else "OFF"), Color(1.0, 0.82, 0.3))
 
 	if tune and event is InputEventKey and event.pressed and not event.echo:
-		var w := defs[cur]
+		var w := _current()
 		if event.keycode == KEY_ENTER:
 			w.flip = not w.flip              # inverte frente/trás
 			_apply_transform(w)
@@ -295,8 +424,10 @@ func _input(event):
 # TROCA DE ARMAS
 # ==================================================
 
-func select_weapon(i: int, force := false):
-	i = wrapi(i, 0, defs.size())
+func select_slot(i: int, force := false):
+	if slots.is_empty():
+		return
+	i = wrapi(i, 0, slots.size())
 	var from_ability: bool = jett.equipped != 0
 	if from_ability:
 		jett.equipped = 0            # Equip.NONE
@@ -307,10 +438,12 @@ func select_weapon(i: int, force := false):
 	_cancel_reload()
 	_cancel_melee()
 	for w in defs:
+		if w.anim == null:
+			continue
 		w.anim.position = Vector3.ZERO
 		w.anim.rotation = Vector3.ZERO
 	cur = i
-	equip_t = defs[i].equip_time
+	equip_t = _current().equip_time
 	vm_equip = 1.0
 	shot_index = 0
 	fire_blocked = true
@@ -326,14 +459,19 @@ func _is_active() -> bool:
 func _physics_process(delta):
 	if not ready_ok:
 		return
+	if jett.buy_open:
+		fire_blocked = true
+		return
 
 	if Input.is_action_just_pressed("weapon_1"):
-		select_weapon(0)
+		select_slot(0)
 	if Input.is_action_just_pressed("weapon_2"):
-		select_weapon(1)
+		select_slot(1)
+	if Input.is_action_just_pressed("weapon_3"):
+		select_slot(2)
 
 	var active := _is_active()
-	var w := defs[cur]
+	var w := _current()
 
 	# velocidade extra com a faca
 	jett.run_speed = base_run_speed * (knife_speed_mult if (active and w.melee) else 1.0)
@@ -453,7 +591,7 @@ func _apply_gun_hit(w: WeaponDef, hit: Dictionary):
 # ---------- recarregar ----------
 
 func start_reload():
-	var w := defs[cur]
+	var w := _current()
 	if w.melee or reloading or w.mag >= w.mag_size or w.reserve <= 0:
 		return
 	reloading = true
@@ -799,7 +937,8 @@ func _load_model(w: WeaponDef) -> Node3D:
 				return inst
 		push_warning("WeaponManager: o recurso '%s' existe, mas não foi importado como uma cena 3D." % w.path)
 	else:
-		push_warning("WeaponManager: não encontrei '%s'. Vou usar um modelo 3D criado pelo script." % w.path)
+		if not w.path.is_empty():
+			push_warning("WeaponManager: não encontrei '%s'. Vou usar um modelo 3D criado pelo script." % w.path)
 	return _placeholder(w)
 
 func _make_vm_material(color: Color, metallic := 0.0, roughness := 0.55, glow := false) -> StandardMaterial3D:
@@ -1018,11 +1157,12 @@ func _process(delta):
 	if not ready_ok:
 		return
 	var active := _is_active()
-	var w := defs[cur]
+	var w := _current()
+	var slot_index: int = slots[clampi(cur, 0, slots.size() - 1)] if not slots.is_empty() else -1
 
 	# visibilidade (arma ativa / mãos do Jett)
 	for i in range(defs.size()):
-		var v: bool = active and i == cur
+		var v: bool = active and i == slot_index
 		if defs[i].holder.visible != v:
 			defs[i].holder.visible = v
 	if hide_jett_hands and jett.hand_l and jett.hand_r:

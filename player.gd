@@ -22,6 +22,9 @@ signal ability_used(ability_name: String)
 
 enum Equip { NONE, SMOKE, KNIVES }
 
+const SLOT_KEYS := {"c": "C", "q": "Q", "e": "E", "x": "X"}
+const SLOT_ORDER := ["c", "q", "e", "x"]
+
 const COLOR_CYAN := Color(0.35, 0.88, 1.0)
 const COLOR_CYAN_DIM := Color(0.2, 0.5, 0.62)
 const COLOR_DIM := Color(0.25, 0.3, 0.36)
@@ -51,6 +54,10 @@ void fragment() {
 # ==================================================
 # EXPORTS
 # ==================================================
+
+@export_group("Partida")
+@export var match_mode := false               # true = HUD de ronda escondido (o match manda)
+@export var auto_respawn := true              # false = o match decide quando renascer
 
 @export_group("Gameplay")
 @export var practice_mode := true            # true = habilidades recarregam por tempo
@@ -184,6 +191,14 @@ var ult_active := false
 var knives := 0
 var knives_in_flight := 0
 
+# ---- agente / kit ----
+var agent: Dictionary = {}
+var kit: Dictionary = {}
+var team := "attack"
+var buy_open := false
+var equipped_slot := "c"
+var ability_color := Color(0.55, 0.92, 1.0)
+
 var speed_intensity := 0.0
 var soft_texture: GradientTexture2D
 
@@ -227,6 +242,8 @@ var timer_label: Label
 var blue_score_label: Label
 var red_score_label: Label
 var killfeed: VBoxContainer
+var scorebar: HBoxContainer
+var icons: Dictionary = {}
 var minimap: Minimap
 var round_time_left := 100.0
 var blue_score := 0
@@ -245,12 +262,12 @@ func _ready():
 	camera.fov = base_fov
 	spawn_position = global_position
 
+	if kit.is_empty():
+		configure_agent(GameState.get_agent("jett"))
 	health = max_health
 	armor = start_armor
 	ult_points = mini(start_ult_points, ult_cost)
-	smoke_charges = smoke_max_charges
-	updraft_charges = updraft_max_charges
-	tailwind_charged = true
+	_reset_kit()
 
 	if col_shape and col_shape.shape is CapsuleShape3D:
 		col_shape.shape = col_shape.shape.duplicate()
@@ -262,6 +279,148 @@ func _ready():
 	_build_fx_emitters()
 	_build_hud()
 	_refresh_viewmodel()
+
+# ==================================================
+# AGENTE / KIT (4 habilidades por agente)
+# ==================================================
+
+func configure_agent(a: Dictionary) -> void:
+	agent = a.duplicate(true)
+	kit = {}
+	for slot in SLOT_ORDER:
+		var ab: Dictionary = agent.abilities[slot].duplicate(true)
+		ab["slot"] = slot
+		var is_ult := bool(ab.get("ult", false)) or str(ab.get("type", "")) in ["knives", "strike"]
+		ab["ult"] = is_ult
+		ab["max_charges"] = 1 if is_ult else int(ab.get("charges", 1))
+		ab["charges"] = int(ab.max_charges)
+		ab["recharge_t"] = 0.0
+		kit[slot] = ab
+
+	max_health = float(agent.get("hp", 100))
+	start_armor = float(agent.get("armor", 50))
+	run_speed = float(agent.get("speed", 7.0))
+	ult_cost = int(agent.get("ult_cost", 7))
+	start_ult_points = 0
+	ability_color = agent.get("color", Color(0.55, 0.92, 1.0))
+	for slot in kit.keys():
+		var ab: Dictionary = kit[slot]
+		if str(ab.get("type", "")) == "smoke":
+			smoke_radius = float(ab.get("radius", 3.6))
+			smoke_duration = float(ab.get("duration", 4.5))
+	health = max_health
+	armor = start_armor
+
+func _ab(slot: String) -> Dictionary:
+	return kit.get(slot, {})
+
+func ab_charges(slot: String) -> int:
+	var ab := _ab(slot)
+	return int(ab.get("charges", 0))
+
+func ab_ready(slot: String) -> bool:
+	var ab := _ab(slot)
+	if ab.is_empty():
+		return false
+	if bool(ab.get("ult", false)):
+		return ult_points >= ult_cost
+	return int(ab.get("charges", 0)) > 0
+
+func _spend(slot: String) -> void:
+	var ab := _ab(slot)
+	if ab.is_empty():
+		return
+	ab.charges = maxi(0, int(ab.get("charges", 1)) - 1)
+	if float(ab.get("recharge_t", 0.0)) <= 0.0:
+		ab.recharge_t = float(ab.get("recharge", 10.0))
+
+func _reset_kit() -> void:
+	for slot in kit.keys():
+		var ab: Dictionary = kit[slot]
+		ab.charges = int(ab.get("max_charges", 1))
+		ab.recharge_t = 0.0
+
+func _slot_with_type(kind: String) -> String:
+	for slot in SLOT_ORDER:
+		var ab := _ab(slot)
+		if not ab.is_empty() and str(ab.get("type", "")) == kind:
+			return slot
+	return ""
+
+func _icon_kind(t: String) -> String:
+	match t:
+		"impulse":
+			return "updraft"
+		"dash":
+			return "tailwind"
+		"knives":
+			return "ult"
+		"strike":
+			return "strike"
+	return t
+
+func _hint_text() -> String:
+	var a := _ab("q")
+	var b := _ab("e")
+	var c := _ab("c")
+	var d := _ab("x")
+	var line1 := "WASD mover | Shift andar | Ctrl agachar | Espaço saltar (segurar no ar = DRIFT)"
+	var line2 := "Q %s | E %s | C %s | X %s" % [
+		str(a.get("name", "")), str(b.get("name", "")), str(c.get("name", "")), str(d.get("name", ""))
+	]
+	var line3 := "Esq. dispara | Dir. alt | R recarrega | 1/2/3 armas | B loja | Tab placar | F plantar | F1 ajuda"
+	return line1 + "\n" + line2 + "\n" + line3
+
+func set_armor(value: float) -> void:
+	armor = clampf(value, 0.0, 100.0)
+	if armor_label:
+		armor_label.text = str(ceili(armor))
+
+func is_alive() -> bool:
+	return not dead
+
+# ==================================================
+# ATIVAÇÃO DE HABILIDADES
+# ==================================================
+
+func use_slot(slot: String) -> void:
+	if dead:
+		return
+	var ab := _ab(slot)
+	if ab.is_empty():
+		return
+	if not ab_ready(slot):
+		if bool(ab.get("ult", false)):
+			toast("%s não está pronta (%d/%d)" % [str(ab.get("name", "ULT")), ult_points, ult_cost], COLOR_RED)
+		else:
+			toast("Sem cargas de %s" % str(ab.get("name", "habilidade")), COLOR_RED)
+		return
+
+	var kind := str(ab.get("type", ""))
+	match kind:
+		"impulse":
+			cast_impulse(slot)
+		"dash":
+			cast_dash(slot)
+		"smoke":
+			equipped_slot = slot
+			toggle_equip(Equip.SMOKE)
+		"flash":
+			cast_flash(slot)
+		"shock":
+			cast_shock(slot)
+		"heal":
+			cast_heal(slot)
+		"mark":
+			cast_mark(slot)
+		"wall":
+			cast_wall(slot)
+		"knives":
+			toggle_equip(Equip.KNIVES)
+		"strike":
+			cast_strike(slot)
+		_:
+			toast("Habilidade desconhecida: " + kind, COLOR_RED)
 
 # ==================================================
 # INPUT MAP (auto)
@@ -392,45 +551,35 @@ func update_timers(delta):
 	jump_buffer_timer = maxf(0.0, jump_buffer_timer - delta)
 	updraft_lock = maxf(0.0, updraft_lock - delta)
 
-	# Tailwind armado expira
-	if tailwind_primed:
-		tailwind_prime_timer -= delta
-		if tailwind_prime_timer <= 0.0:
-			tailwind_primed = false
-			toast("Tailwind expirou", COLOR_CYAN_DIM)
-
-	if practice_mode:
-		if not tailwind_charged and tailwind_recharge_t > 0.0:
-			tailwind_recharge_t -= delta
-			if tailwind_recharge_t <= 0.0:
-				tailwind_charged = true
-				toast("TAILWIND RECARREGADO", COLOR_CYAN)
-
-		if smoke_charges < smoke_max_charges and smoke_recharge_t > 0.0:
-			smoke_recharge_t -= delta
-			if smoke_recharge_t <= 0.0:
-				smoke_charges += 1
-				smoke_recharge_t = ability_recharge_time if smoke_charges < smoke_max_charges else 0.0
-
-		if updraft_charges < updraft_max_charges and updraft_recharge_t > 0.0:
-			updraft_recharge_t -= delta
-			if updraft_recharge_t <= 0.0:
-				updraft_charges += 1
-				updraft_recharge_t = ability_recharge_time if updraft_charges < updraft_max_charges else 0.0
+	# recarga automática de todas as habilidades (a ultimate só com kills)
+	for slot in kit.keys():
+		var ab: Dictionary = kit[slot]
+		if bool(ab.get("ult", false)):
+			continue
+		if int(ab.get("charges", 0)) >= int(ab.get("max_charges", 1)):
+			ab.recharge_t = 0.0
+			continue
+		ab.recharge_t = maxf(0.0, float(ab.get("recharge_t", 0.0)) - delta)
+		if float(ab.recharge_t) <= 0.0:
+			ab.charges = int(ab.get("charges", 0)) + 1
+			if int(ab.charges) < int(ab.get("max_charges", 1)):
+				ab.recharge_t = float(ab.get("recharge", 10.0))
 
 # ==================================================
 # ABILITY INPUT
 # ==================================================
 
 func handle_ability_input():
-	if Input.is_action_just_pressed("dash"):
-		try_tailwind()
+	if buy_open:
+		return
 	if Input.is_action_just_pressed("updraft"):
-		try_updraft()
+		use_slot("q")
+	if Input.is_action_just_pressed("dash"):
+		use_slot("e")
 	if Input.is_action_just_pressed("smoke"):
-		toggle_equip(Equip.SMOKE)
+		use_slot("c")
 	if Input.is_action_just_pressed("ultimate"):
-		toggle_equip(Equip.KNIVES)
+		use_slot("x")
 	if Input.is_action_just_pressed("toggle_help") and hint_label:
 		hint_label.visible = not hint_label.visible
 
@@ -459,9 +608,12 @@ func toggle_equip(which: Equip):
 		return
 
 	if which == Equip.SMOKE:
-		if smoke_charges <= 0:
-			toast("Sem cargas de Cloudburst", COLOR_RED)
-			return
+		if equipped_slot == "" or ab_charges(equipped_slot) <= 0:
+			var found := _slot_with_type("smoke")
+			if found == "" or ab_charges(found) <= 0:
+				toast("Sem cargas de fumo", COLOR_RED)
+				return
+			equipped_slot = found
 	elif which == Equip.KNIVES:
 		if not ult_active:
 			if ult_points < ult_cost:
@@ -470,7 +622,7 @@ func toggle_equip(which: Equip):
 			ult_active = true
 			ult_points = 0
 			knives = knives_max
-			toast("BLADE STORM", COLOR_GOLD)
+			toast(str(_ab("x").get("name", "BLADE STORM")), COLOR_GOLD)
 			if enable_particles:
 				var pos := global_position + Vector3(0, 1.0, 0)
 				burst(pos, {"amount": 50, "lifetime": 0.6, "size": 0.5, "additive": true,
@@ -478,7 +630,7 @@ func toggle_equip(which: Equip):
 					"color": Color(1.0, 0.9, 0.55, 0.8)})
 				spawn_ring(pos, Vector3.UP, COLOR_GOLD, 6.0, 0.5, 0.5)
 			add_shake(0.3)
-			emit_signal("ability_used", "blade_storm")
+			emit_signal("ability_used", "ultimate")
 
 	equipped = which
 	_refresh_viewmodel()
@@ -530,38 +682,26 @@ func update_crouch(delta):
 # TAILWIND (E)
 # ==================================================
 
-func try_tailwind():
-	if tailwind_primed:
-		perform_tailwind()
-	elif tailwind_charged:
-		tailwind_primed = true
-		tailwind_prime_timer = tailwind_prime_time
-		toast("TAILWIND PRONTO - pressa E para dar dash", COLOR_CYAN)
-		if enable_particles:
-			burst(global_position + Vector3(0, 1.0, 0), {"amount": 18, "lifetime": 0.5, "size": 0.35,
-				"additive": true, "v_min": 1.0, "v_max": 3.0, "damping": 2.0, "emit_radius": 0.5,
-				"color": wind_color})
-	else:
-		toast("Tailwind indisponível", COLOR_RED)
-
-func perform_tailwind():
+func cast_dash(slot: String) -> void:
+	var ab := _ab(slot)
+	_spend(slot)
 	var input_dir := get_move_input()
 	var dir := -transform.basis.z
 	if input_dir != Vector2.ZERO:
 		dir = (transform.basis * Vector3(input_dir.x, 0, input_dir.y))
 	dir.y = 0.0
+	if dir.length() < 0.01:
+		dir = -transform.basis.z
 	dash_direction = dir.normalized()
 
+	dash_speed = float(ab.get("speed", dash_speed))
 	is_dashing = true
-	dash_timer = dash_duration
-	tailwind_primed = false
-	tailwind_charged = false
-	tailwind_kills = 0
-	tailwind_recharge_t = tailwind_cooldown
+	dash_timer = float(ab.get("duration", dash_duration))
 	jump_active = false
-
 	_dash_fx()
-	emit_signal("ability_used", "tailwind")
+	emit_signal("ability_used", "dash")
+
+# (o dash agora é instantâneo: ver cast_dash)
 
 func process_dash(delta):
 	dash_timer -= delta
@@ -599,19 +739,14 @@ func _dash_fx():
 # UPDRAFT (Q)
 # ==================================================
 
-func try_updraft():
-	if updraft_charges <= 0:
-		toast("Sem cargas de Updraft", COLOR_RED)
-		return
+func cast_impulse(slot: String) -> void:
 	if updraft_lock > 0.0:
 		return
-
-	updraft_charges -= 1
+	var ab := _ab(slot)
+	_spend(slot)
 	updraft_lock = updraft_lock_time
-	if updraft_recharge_t <= 0.0:
-		updraft_recharge_t = ability_recharge_time
 
-	velocity.y = updraft_force
+	velocity.y = float(ab.get("force", updraft_force))
 	jump_active = false
 	updraft_fx_timer = 0.55
 
@@ -621,17 +756,17 @@ func try_updraft():
 
 	if enable_particles:
 		var feet := global_position + Vector3(0, 0.1, 0)
-		spawn_ring(feet, Vector3.UP, wind_color, 7.0, 0.5, 0.5)
+		spawn_ring(feet, Vector3.UP, ability_color, 7.0, 0.5, 0.5)
 		spawn_ring(feet, Vector3.UP, Color(1, 1, 1, 0.8), 4.5, 0.4, 0.35)
 		burst(feet, {"amount": 50, "lifetime": 0.7, "size": 0.7, "additive": true, "v_min": 3.0, "v_max": 9.0,
-			"spread": 80.0, "damping": 3.0, "grow": true, "emit_radius": 0.5, "color": wind_color})
+			"spread": 80.0, "damping": 3.0, "grow": true, "emit_radius": 0.5, "color": ability_color})
 		burst(feet, {"amount": 40, "lifetime": 0.45, "streak": true, "additive": true, "shrink": true,
 			"direction": Vector3.UP, "spread": 35.0, "v_min": 8.0, "v_max": 16.0, "emit_radius": 0.6,
 			"streak_length": 1.4, "color": Color(0.85, 0.98, 1.0, 0.9)})
 		burst(feet, {"amount": 16, "lifetime": 0.8, "size": 1.0, "v_min": 1.0, "v_max": 3.5,
 			"spread": 85.0, "damping": 2.5, "grow": true, "emit_radius": 0.4,
 			"color": Color(0.8, 0.85, 0.9, 0.45), "fade_start": 0.3})
-	emit_signal("ability_used", "updraft")
+	emit_signal("ability_used", "impulse")
 
 # ==================================================
 # CLOUDBURST (C)
@@ -651,11 +786,11 @@ func get_aim_point(max_dist := 200.0) -> Vector3:
 	return hit.position
 
 func throw_smoke():
-	if smoke_charges <= 0:
+	if equipped_slot == "" or ab_charges(equipped_slot) <= 0:
+		equipped = Equip.NONE
+		_refresh_viewmodel()
 		return
-	smoke_charges -= 1
-	if smoke_recharge_t <= 0.0:
-		smoke_recharge_t = ability_recharge_time
+	_spend(equipped_slot)
 
 	var origin := knife_origin()
 	var dir := (get_aim_point(60.0) - origin).normalized()
@@ -669,7 +804,7 @@ func throw_smoke():
 	vm_kick = 0.12
 	equipped = Equip.NONE
 	_refresh_viewmodel()
-	emit_signal("ability_used", "cloudburst")
+	emit_signal("ability_used", "smoke")
 
 func spawn_smoke_cloud(pos: Vector3):
 	var root := Node3D.new()
@@ -791,16 +926,267 @@ func _check_ult_end():
 		_refresh_viewmodel()
 
 # ==================================================
+# HABILIDADES GENÉRICAS (usadas pelos 6 agentes)
+# ==================================================
+
+func _node_dead(n) -> bool:
+	if n == null:
+		return true
+	var d = n.get("dead")
+	return d != null and bool(d)
+
+func _is_enemy(n) -> bool:
+	if n == null or not is_instance_valid(n):
+		return false
+	var t = n.get("team")
+	if t == null:
+		return true
+	return str(t) != team
+
+func _targets_in_radius(center: Vector3, radius: float) -> Array:
+	var out: Array = []
+	var seen := {}
+	for grp in ["bot", "enemy", "ally", "player"]:
+		for n in get_tree().get_nodes_in_group(grp):
+			if seen.has(n):
+				continue
+			seen[n] = true
+			if not (n is Node3D) or n == self:
+				continue
+			if _node_dead(n) or not _is_enemy(n):
+				continue
+			if n.global_position.distance_to(center) <= radius:
+				out.append(n)
+	return out
+
+func _has_los(from: Vector3, to: Vector3, ignore) -> bool:
+	var q := PhysicsRayQueryParameters3D.create(from, to)
+	q.exclude = [get_rid()]
+	var hit := get_world_3d().direct_space_state.intersect_ray(q)
+	if hit.is_empty():
+		return true
+	var col = hit.collider
+	if col == ignore:
+		return true
+	if col is Node and ignore is Node and ignore.is_ancestor_of(col):
+		return true
+	return false
+
+func _explode(center: Vector3, radius: float, damage: float, col: Color) -> void:
+	if not is_inside_tree():
+		return
+	if enable_particles:
+		spawn_ring(center, Vector3.UP, col, radius * 1.4, 0.45, 0.5)
+		burst(center, {"amount": 60, "lifetime": 0.6, "size": 1.2, "additive": true,
+			"v_min": 4.0, "v_max": 12.0, "spread": 90.0, "damping": 3.0, "grow": true,
+			"emit_radius": radius * 0.4, "color": col})
+	var targets := _targets_in_radius(center, radius)
+	for n in targets:
+		if not _has_los(center + Vector3(0, 0.5, 0), n.global_position + Vector3(0, 1.2, 0), n):
+			continue
+		var d: float = n.global_position.distance_to(center)
+		var falloff := clampf(1.0 - d / maxf(radius, 0.1), 0.25, 1.0)
+		n.take_damage(damage * falloff, self)
+	add_shake(0.35)
+
+func cast_flash(slot: String) -> void:
+	var ab := _ab(slot)
+	_spend(slot)
+	var radius := float(ab.get("radius", 24.0))
+	var duration := float(ab.get("blind", 2.2))
+	var origin := camera.global_position
+	var dir := -camera.global_transform.basis.z
+	var blinded := 0
+	for n in _targets_in_radius(origin, radius):
+		var to: Vector3 = n.global_position + Vector3(0, 1.4, 0) - origin
+		if to.normalized().dot(dir) < 0.2:
+			continue
+		if not _has_los(origin, n.global_position + Vector3(0, 1.2, 0), n):
+			continue
+		if n.has_method("blind"):
+			n.blind(duration)
+			blinded += 1
+	if enable_particles:
+		var p := origin + dir * 1.4
+		burst(p, {"amount": 40, "lifetime": 0.35, "size": 2.2, "additive": true,
+			"v_min": 6.0, "v_max": 14.0, "spread": 40.0, "damping": 6.0, "grow": true,
+			"color": Color(1, 1, 1, 0.95)})
+	var light := OmniLight3D.new()
+	light.light_color = Color(1, 1, 0.95)
+	light.omni_range = 14.0
+	light.light_energy = 8.0
+	get_tree().current_scene.add_child(light)
+	light.global_position = origin + dir * 2.0
+	_free_later(light, 0.18)
+	if blinded > 0:
+		toast("CEGOU %d INIMIGO(S)" % blinded, Color.WHITE)
+	else:
+		toast("Ninguém foi cegado", COLOR_RED)
+	emit_signal("ability_used", "flash")
+
+func cast_shock(slot: String) -> void:
+	var ab := _ab(slot)
+	_spend(slot)
+	var target := get_aim_point(70.0)
+	var dmg := float(ab.get("damage", 55.0))
+	var radius := float(ab.get("radius", 4.0))
+	var orb := MeshInstance3D.new()
+	var sph := SphereMesh.new()
+	sph.radius = 0.22
+	sph.height = 0.44
+	orb.mesh = sph
+	var m := StandardMaterial3D.new()
+	m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	m.albedo_color = ability_color
+	orb.material_override = m
+	orb.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	get_tree().current_scene.add_child(orb)
+	orb.global_position = camera.global_position + (-camera.global_transform.basis.z) * 0.8
+	var tw := orb.create_tween()
+	tw.tween_property(orb, "global_position", target, 0.32).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	tw.tween_callback(func():
+		if is_instance_valid(orb):
+			orb.queue_free()
+		_explode(target, radius, dmg, ability_color)
+	)
+	emit_signal("ability_used", "shock")
+
+func cast_heal(slot: String) -> void:
+	var ab := _ab(slot)
+	_spend(slot)
+	var amount := float(ab.get("heal", 60.0))
+	var radius := float(ab.get("radius", 7.0))
+	health = minf(max_health, health + amount)
+	for n in get_tree().get_nodes_in_group("ally"):
+		if n is Node3D and n.has_method("heal") and n.global_position.distance_to(global_position) <= radius:
+			n.heal(amount)
+	if enable_particles:
+		var c := global_position + Vector3(0, 1.0, 0)
+		spawn_ring(c, Vector3.UP, Color(0.5, 1.0, 0.7), radius * 1.2, 0.6, 0.4)
+		burst(c, {"amount": 40, "lifetime": 0.8, "size": 0.5, "additive": true, "v_min": 1.0,
+			"v_max": 4.0, "spread": 60.0, "grow": true, "emit_radius": 1.2, "color": Color(0.55, 1.0, 0.75, 0.85)})
+	toast("CURA +%d" % int(amount), Color(0.6, 1.0, 0.8))
+	emit_signal("ability_used", "heal")
+
+func cast_mark(slot: String) -> void:
+	var ab := _ab(slot)
+	_spend(slot)
+	var radius := float(ab.get("radius", 40.0))
+	var duration := float(ab.get("duration", 5.0))
+	var count := 0
+	for n in _targets_in_radius(global_position, radius):
+		if n.has_method("mark"):
+			n.mark(duration)
+			count += 1
+	if enable_particles:
+		spawn_ring(global_position + Vector3(0, 0.2, 0), Vector3.UP, ability_color, radius * 0.6, 0.7, 0.4)
+	toast("RECON: %d INIMIGO(S) MARCADO(S)" % count, ability_color)
+	emit_signal("ability_used", "mark")
+
+func cast_wall(slot: String) -> void:
+	var ab := _ab(slot)
+	_spend(slot)
+	var duration := float(ab.get("duration", 22.0))
+	var fwd := -camera.global_transform.basis.z
+	fwd.y = 0.0
+	if fwd.length() < 0.01:
+		fwd = -transform.basis.z
+	fwd = fwd.normalized()
+	var side := fwd.cross(Vector3.UP).normalized()
+	var center := global_position + fwd * 6.0
+
+	var q := PhysicsRayQueryParameters3D.create(center + Vector3(0, 8.0, 0), center + Vector3(0, -6.0, 0))
+	q.exclude = [get_rid()]
+	var hit := get_world_3d().direct_space_state.intersect_ray(q)
+	var base_y := global_position.y
+	if not hit.is_empty():
+		base_y = hit.position.y
+
+	var root := Node3D.new()
+	get_tree().current_scene.add_child(root)
+	root.global_position = Vector3(center.x, base_y, center.z)
+	root.rotation.y = atan2(-side.z, side.x)
+
+	var mat := StandardMaterial3D.new()
+	mat.albedo_color = Color(ability_color.r, ability_color.g, ability_color.b, 0.7)
+	mat.emission_enabled = true
+	mat.emission = ability_color
+	mat.emission_energy_multiplier = 0.6
+	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	mat.cull_mode = BaseMaterial3D.CULL_DISABLED
+
+	var width := 7.0
+	var segments := 5
+	var seg_w := width / float(segments)
+	for row in range(3):
+		for i in range(segments):
+			var off := -width * 0.5 + seg_w * (float(i) + 0.5)
+			var mi := MeshInstance3D.new()
+			var bm := BoxMesh.new()
+			bm.size = Vector3(seg_w, 3.0, 0.5)
+			mi.mesh = bm
+			mi.material_override = mat
+			mi.position = Vector3(off, 1.5 + float(row) * 3.0, 0)
+			mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+			root.add_child(mi)
+
+	var body := StaticBody3D.new()
+	var cs := CollisionShape3D.new()
+	var sh := BoxShape3D.new()
+	sh.size = Vector3(width, 9.0, 0.6)
+	cs.shape = sh
+	body.add_child(cs)
+	body.position = Vector3(0, 4.5, 0)
+	root.add_child(body)
+
+	var tw := root.create_tween()
+	tw.tween_interval(maxf(0.5, duration - 1.0))
+	tw.tween_property(mat, "albedo_color:a", 0.0, 0.8)
+	tw.tween_callback(root.queue_free)
+	toast("PAREDE CRIADA", ability_color)
+	emit_signal("ability_used", "wall")
+
+func cast_strike(slot: String) -> void:
+	var ab := _ab(slot)
+	ult_points = 0
+	var target := get_aim_point(90.0)
+	var dmg := float(ab.get("damage", 150.0))
+	var radius := float(ab.get("radius", 6.5))
+
+	if enable_particles:
+		spawn_ring(target, Vector3.UP, ability_color, radius * 1.6, 1.1, 0.4)
+
+	var marker := MeshInstance3D.new()
+	var cyl := CylinderMesh.new()
+	cyl.top_radius = radius
+	cyl.bottom_radius = radius
+	cyl.height = 0.05
+	marker.mesh = cyl
+	var mm := StandardMaterial3D.new()
+	mm.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	mm.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	mm.albedo_color = Color(1, 0.2, 0.15, 0.35)
+	marker.material_override = mm
+	marker.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	get_tree().current_scene.add_child(marker)
+	marker.global_position = target + Vector3(0, 0.06, 0)
+
+	get_tree().create_timer(1.1).timeout.connect(func():
+		if is_instance_valid(marker):
+			marker.queue_free()
+		_explode(target, radius, dmg, ability_color)
+	)
+	toast(str(ab.get("name", "ULTIMATE")), COLOR_GOLD)
+	add_shake(0.5)
+	emit_signal("ability_used", "strike")
+
+# ==================================================
 # KILLS / DANO
 # ==================================================
 
 func register_kill():
 	if not ult_active:
 		ult_points = mini(ult_cost, ult_points + 1)
-	tailwind_kills += 1
-	if not tailwind_charged and not practice_mode and tailwind_kills >= tailwind_kills_needed:
-		tailwind_charged = true
-		toast("TAILWIND RECARREGADO", COLOR_CYAN)
 	if ult_active:
 		knives = knives_max
 		toast("LÂMINAS RECARREGADAS", COLOR_GOLD)
@@ -826,28 +1212,40 @@ func take_damage(amount: float, _source = null) -> bool:
 	return false
 
 func die():
+	if dead:
+		return
 	dead = true
-	emit_signal("died")
-	toast("ELIMINADO", COLOR_RED)
-	await get_tree().create_timer(2.0).timeout
-	respawn()
-
-func respawn():
-	global_position = spawn_position
-	velocity = Vector3.ZERO
-	health = max_health
-	armor = start_armor
-	smoke_charges = smoke_max_charges
-	updraft_charges = updraft_max_charges
-	tailwind_charged = true
-	is_dashing = false
-	# Limpar a Ultimate e esconder todas as facas ao renascer.
+	equipped = Equip.NONE
 	ult_active = false
 	knives = 0
 	knives_in_flight = 0
-	equipped = Equip.NONE
 	_refresh_viewmodel()
+	emit_signal("died")
+	toast("ELIMINADO", COLOR_RED)
+	if auto_respawn:
+		await get_tree().create_timer(2.0).timeout
+		if is_inside_tree():
+			respawn()
+
+func respawn():
+	revive_at(spawn_position)
+
+func revive_at(pos: Vector3) -> void:
+	global_position = pos
+	velocity = Vector3.ZERO
+	health = max_health
+	armor = start_armor
+	is_dashing = false
 	dead = false
+	ult_active = false
+	ult_points = 0
+	knives = 0
+	knives_in_flight = 0
+	equipped = Equip.NONE
+	equipped_slot = "c"
+	buy_open = false
+	_reset_kit()
+	_refresh_viewmodel()
 
 # ==================================================
 # CAMERA
@@ -1528,9 +1926,7 @@ func _build_hud():
 	knife_label.visible = false
 	root.add_child(knife_label)
 
-	hint_label = _label("WASD mover | Shift andar | Ctrl agachar | Espaço saltar (segurar no ar = DRIFT)\n"
-		+ "Q Updraft | E Tailwind (2x: arma + dash) | C Cloudburst (esq. lança, segurar curva)\n"
-		+ "X Blade Storm (esq. 1 faca, dir. todas) | F1 esconder ajuda", 12, Color(1, 1, 1, 0.7))
+	hint_label = _label(_hint_text(), 12, Color(1, 1, 1, 0.7))
 	hint_label.position = Vector2(16, 232)
 	root.add_child(hint_label)
 
@@ -1623,6 +2019,9 @@ func _build_scoreboard(parent: Control):
 	bar.offset_bottom = 50
 	bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	parent.add_child(bar)
+	scorebar = bar
+	if match_mode:
+		bar.visible = false
 
 	var blue := HBoxContainer.new()
 	blue.add_theme_constant_override("separation", 3)
@@ -1713,10 +2112,9 @@ func _build_bottom_hud(parent: Control):
 	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	parent.add_child(row)
 
-	icon_smoke = _new_icon(row, "smoke", "C")
-	icon_updraft = _new_icon(row, "updraft", "Q")
-	icon_tailwind = _new_icon(row, "tailwind", "E")
-	icon_ult = _new_icon(row, "ult", "X")
+	icons = {}
+	for slot in SLOT_ORDER:
+		icons[slot] = _new_icon(row, "smoke", str(SLOT_KEYS[slot]))
 
 	# vida + escudo (à esquerda das habilidades)
 	var hp := Control.new()
@@ -1743,7 +2141,6 @@ func _build_bottom_hud(parent: Control):
 	health_label.position = Vector2(74, 16)
 	hp.add_child(health_label)
 
-	# linha fina decorativa por baixo
 	var line := _rect(parent, Vector2.ZERO, Vector2(1, 1), Color(1, 1, 1, 0.25))
 	line.set_anchors_preset(Control.PRESET_CENTER_BOTTOM)
 	line.offset_left = -350
@@ -1778,7 +2175,7 @@ func _update_hud(delta):
 	hud_time += delta
 	var pulse := 0.5 + 0.5 * sin(hud_time * 6.0)
 
-	# relógio da ronda
+	# relógio local (no modo partida quem manda é o HUD do match)
 	round_time_left -= delta
 	if round_time_left <= 0.0:
 		round_time_left = 100.0
@@ -1791,63 +2188,53 @@ func _update_hud(delta):
 	var white := Color(0.95, 0.98, 1.0)
 	var dim := Color(0.5, 0.55, 0.6)
 
-	# CLOUDBURST
-	var frac := 0.0
-	var txt := ""
-	if smoke_charges <= 0:
-		if practice_mode:
-			frac = smoke_recharge_t / ability_recharge_time
-			txt = str(ceili(smoke_recharge_t))
-		else:
-			frac = 1.0
-	var ring := COLOR_DIM
-	if equipped == Equip.SMOKE:
-		ring = COLOR_CYAN
-	elif smoke_charges > 0:
-		ring = white
-	_set_icon(icon_smoke, white if smoke_charges > 0 else dim, ring, frac, txt, smoke_charges, smoke_max_charges)
+	for slot in SLOT_ORDER:
+		var ic = icons.get(slot, null)
+		if ic == null:
+			continue
+		var ab := _ab(slot)
+		if ab.is_empty():
+			continue
+		ic.kind = _icon_kind(str(ab.get("type", "")))
+		ic.accent = ability_color
 
-	# UPDRAFT
-	frac = 0.0
-	txt = ""
-	if updraft_charges <= 0:
-		if practice_mode:
-			frac = updraft_recharge_t / ability_recharge_time
-			txt = str(ceili(updraft_recharge_t))
-		else:
-			frac = 1.0
-	_set_icon(icon_updraft, white if updraft_charges > 0 else dim, white if updraft_charges > 0 else COLOR_DIM,
-		frac, txt, updraft_charges, updraft_max_charges)
+		var frac := 0.0
+		var txt := ""
+		var filled := 0
+		var total := 0
+		var ring := COLOR_DIM
+		var glyph := dim
+		var is_ult := bool(ab.get("ult", false))
 
-	# TAILWIND
-	frac = 0.0
-	txt = ""
-	if tailwind_primed:
-		ring = COLOR_CYAN.lerp(Color.WHITE, pulse * 0.6)
-	elif tailwind_charged:
-		ring = white
-	else:
-		ring = COLOR_DIM
-		if practice_mode:
-			frac = tailwind_recharge_t / tailwind_cooldown
-			txt = str(ceili(tailwind_recharge_t))
+		if is_ult:
+			var ready := ult_points >= ult_cost
+			filled = ult_points
+			total = ult_cost
+			if ult_active:
+				txt = str(knives)
+				ring = COLOR_CYAN if equipped == Equip.KNIVES else COLOR_GOLD
+				glyph = COLOR_GOLD
+			elif ready:
+				ring = COLOR_GOLD.lerp(Color.WHITE, pulse * 0.6)
+				glyph = COLOR_GOLD
+			else:
+				glyph = dim
 		else:
-			frac = 1.0
-			txt = "%d/%d" % [tailwind_kills, tailwind_kills_needed]
-	_set_icon(icon_tailwind, white if (tailwind_charged or tailwind_primed) else dim, ring, frac, txt, 0, 0)
+			var charges := int(ab.get("charges", 0))
+			var maxc := int(ab.get("max_charges", 1))
+			filled = charges
+			total = maxc
+			if charges > 0:
+				glyph = white
+				ring = white
+				if equipped == Equip.SMOKE and slot == equipped_slot:
+					ring = ability_color
+			else:
+				var rec := maxf(float(ab.get("recharge", 10.0)), 0.1)
+				frac = clampf(float(ab.get("recharge_t", 0.0)) / rec, 0.0, 1.0)
+				txt = str(ceili(float(ab.get("recharge_t", 0.0))))
 
-	# ULTIMATE
-	txt = ""
-	var ult_ready := ult_points >= ult_cost
-	if ult_active:
-		txt = str(knives)
-		ring = COLOR_CYAN if equipped == Equip.KNIVES else COLOR_GOLD
-	elif ult_ready:
-		ring = COLOR_GOLD.lerp(Color.WHITE, pulse * 0.6)
-	else:
-		ring = COLOR_DIM
-	_set_icon(icon_ult, COLOR_GOLD if (ult_ready or ult_active) else dim, ring, 0.0, txt,
-		ult_points, ult_cost, true, COLOR_GOLD)
+		_set_icon(ic, glyph, ring, frac, txt, filled, total, is_ult, COLOR_GOLD if is_ult else ability_color)
 
 	knife_label.visible = ult_active
 	if ult_active:
@@ -1947,6 +2334,29 @@ class AbilityIcon extends Control:
 				draw_line(c + Vector2(-12, 6), c + Vector2(3, 6), col, 2.0, true)
 				draw_polyline(PackedVector2Array([c + Vector2(5, -7), c + Vector2(13, 0), c + Vector2(5, 7)]),
 					col, 2.5, true)
+			"flash":
+				for k in range(8):
+					var a := TAU * float(k) / 8.0
+					draw_line(c, c + Vector2(cos(a), sin(a)) * 12.0, col, 2.0, true)
+				draw_circle(c, 3.0, col)
+			"shock":
+				draw_arc(c, 9.0, 0.0, TAU, 24, col, 2.0, true)
+				draw_line(c + Vector2(-5, 5), c + Vector2(5, -5), col, 2.0, true)
+				draw_line(c + Vector2(5, -5), c + Vector2(2, -9), col, 2.0, true)
+			"heal":
+				draw_rect(Rect2(c + Vector2(-3, -11), Vector2(6, 22)), col)
+				draw_rect(Rect2(c + Vector2(-11, -3), Vector2(22, 6)), col)
+			"mark":
+				draw_arc(c, 10.0, -PI * 0.75, PI * 0.75, 20, col, 2.0, true)
+				draw_arc(c, 6.0, -PI * 0.75, PI * 0.75, 20, col, 2.0, true)
+				draw_circle(c + Vector2(2, 0), 2.5, col)
+			"wall":
+				for k in range(3):
+					draw_rect(Rect2(c + Vector2(-11 + k * 8, -10), Vector2(6, 20)), col)
+			"strike":
+				draw_line(c + Vector2(0, -12), c + Vector2(0, 6), col, 2.5, true)
+				draw_polyline(PackedVector2Array([c + Vector2(-8, 2), c + Vector2(0, 12), c + Vector2(8, 2)]), col, 2.5, true)
+				draw_line(c + Vector2(-11, -12), c + Vector2(11, -12), col, 2.0, true)
 			"ult":
 				draw_colored_polygon(PackedVector2Array([c + Vector2(0, -14), c + Vector2(6, 0),
 					c + Vector2(0, 7), c + Vector2(-6, 0)]), col)
@@ -1980,9 +2390,22 @@ class Minimap extends Control:
 				if n is Node3D:
 					draw_circle(_to_map(n.global_position), jett.smoke_radius * MAP_SCALE, Color(0.8, 0.9, 0.95, 0.35))
 			for n in get_tree().get_nodes_in_group("enemy"):
+				if not (n is Node3D):
+					continue
+				var dd = n.get("dead")
+				if dd != null and bool(dd):
+					continue
+				var mt = n.get("mark_t")
+				var marked: bool = mt != null and float(mt) > 0.0
+				if not marked and n.global_position.distance_to(jett.global_position) > 20.0:
+					continue
+				var p: Vector2 = _to_map(n.global_position)
+				draw_circle(p, 5.0 if marked else 4.0, Color(1.0, 0.28, 0.33))
+			for n in get_tree().get_nodes_in_group("ally"):
 				if n is Node3D:
-					var p: Vector2 = _to_map(n.global_position)
-					draw_circle(p, 4.0, Color(1.0, 0.28, 0.33))
+					var ad = n.get("dead")
+					if ad == null or not bool(ad):
+						draw_circle(_to_map(n.global_position), 3.5, Color(0.4, 0.88, 1.0))
 
 		var r := 70.0
 		var t := tan(0.7)

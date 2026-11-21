@@ -16,6 +16,9 @@ extends Node3D
 @export_group("Mapa")
 @export var map_seed := 7
 @export var map_half := 70.0
+@export var map_id := ""          # vazio = usa o mapa escolhido no lobby (GameState)
+
+var theme: Dictionary = {}
 
 @export_group("Jogador")
 @export var spawn_player := true
@@ -30,14 +33,14 @@ extends Node3D
 const FLOOR_H := 3.2
 const CELL_W := 3.0
 
-const C_ROAD := Color(0.15, 0.17, 0.19)
-const C_PAVE := Color(0.64, 0.62, 0.58)
-const C_GROUND := Color(0.5, 0.5, 0.48)
-const C_GRASS := Color(0.36, 0.62, 0.3)
+var C_ROAD := Color(0.15, 0.17, 0.19)
+var C_PAVE := Color(0.64, 0.62, 0.58)
+var C_GROUND := Color(0.5, 0.5, 0.48)
+var C_GRASS := Color(0.36, 0.62, 0.3)
 const C_LINE := Color(0.92, 0.92, 0.88)
 const C_YELLOW := Color(0.95, 0.78, 0.2)
-const C_DECK := Color(0.32, 0.34, 0.37)
-const C_RAIL := Color(0.55, 0.58, 0.6)
+var C_DECK := Color(0.32, 0.34, 0.37)
+var C_RAIL := Color(0.55, 0.58, 0.6)
 const C_ORANGE := Color(0.92, 0.46, 0.14)
 const C_PINK := Color(0.86, 0.55, 0.52)
 const C_CREAM := Color(0.93, 0.86, 0.78)
@@ -52,6 +55,7 @@ var world: Node3D
 # ==================================================
 
 func _ready():
+	_apply_theme()
 	rng.seed = map_seed
 	world = Node3D.new()
 	world.name = "Map"
@@ -69,10 +73,28 @@ func _ready():
 	_build_elevated_road()
 	_build_park()
 	_build_plaza_props()
+	_build_extra_cover()
 	_build_border()
 	if spawn_dummies:
 		_spawn_dummies()
 	call_deferred("_place_player")
+
+# Paleta + dimensões vêm do mapa escolhido no lobby (GameState.MAPS).
+func _apply_theme() -> void:
+	var id := map_id
+	if id == "" and GameState != null:
+		id = GameState.map_id
+	theme = GameState.get_map(id)
+	if theme.is_empty():
+		return
+	map_seed = int(theme.get("seed", map_seed))
+	map_half = float(theme.get("half", map_half))
+	C_ROAD = theme.get("road", C_ROAD)
+	C_PAVE = theme.get("pave", C_PAVE)
+	C_GROUND = theme.get("ground", C_GROUND)
+	C_GRASS = theme.get("grass", C_GRASS)
+	C_DECK = C_GROUND.darkened(0.35)
+	C_RAIL = C_PAVE.darkened(0.18)
 
 func _physics_process(_delta):
 	# quem cair ao mar morre
@@ -258,11 +280,13 @@ func tree(pos: Vector3, s: float, leaf: Color) -> void:
 # ==================================================
 
 func _build_environment():
+	var sky_top: Color = theme.get("sky_top", Color(0.28, 0.45, 0.52))
+	var horizon: Color = theme.get("sky_horizon", Color(0.58, 0.74, 0.75))
 	var sky_mat := ProceduralSkyMaterial.new()
-	sky_mat.sky_top_color = Color(0.28, 0.45, 0.52)
-	sky_mat.sky_horizon_color = Color(0.58, 0.74, 0.75)
-	sky_mat.ground_horizon_color = Color(0.58, 0.74, 0.75)
-	sky_mat.ground_bottom_color = Color(0.22, 0.34, 0.38)
+	sky_mat.sky_top_color = sky_top
+	sky_mat.sky_horizon_color = horizon
+	sky_mat.ground_horizon_color = horizon
+	sky_mat.ground_bottom_color = sky_top.darkened(0.45)
 	var sky := Sky.new()
 	sky.sky_material = sky_mat
 
@@ -273,7 +297,7 @@ func _build_environment():
 	env.ambient_light_energy = 0.9
 	env.tonemap_mode = Environment.TONE_MAPPER_FILMIC
 	env.fog_enabled = true
-	env.fog_light_color = Color(0.5, 0.68, 0.7)
+	env.fog_light_color = theme.get("fog", Color(0.5, 0.68, 0.7))
 	env.fog_density = 0.004
 	env.ssao_enabled = true
 	env.glow_enabled = true
@@ -287,7 +311,7 @@ func _build_environment():
 	var sun := DirectionalLight3D.new()
 	sun.rotation_degrees = Vector3(-48, -35, 0)
 	sun.light_energy = 1.3
-	sun.light_color = Color(1.0, 0.95, 0.85)
+	sun.light_color = theme.get("sun", Color(1.0, 0.95, 0.85))
 	sun.shadow_enabled = enable_shadows
 	sun.directional_shadow_max_distance = 130.0
 	add_child(sun)
@@ -624,6 +648,28 @@ func _build_plaza_props():
 	# candeeiros na plaza
 	for p in [Vector3(-10, 0, -14), Vector3(10, 0, -14), Vector3(0, 0, 8)]:
 		lamp(p)
+
+# Cobertura extra: cada mapa tem uma quantidade própria de barreiras/caixotes
+# espalhados pelas duas avenidas principais (zonas garantidamente abertas).
+func _build_extra_cover() -> void:
+	var count := int(theme.get("cover", 0))
+	if count <= 0:
+		return
+	var accent: Color = theme.get("accent", C_ORANGE)
+	var concrete := mat(C_PAVE.darkened(0.35), 0.95)
+	for i in range(count):
+		var pos: Vector3
+		if rng.randf() < 0.55:
+			pos = Vector3(rng.randf_range(-map_half + 10.0, map_half - 10.0), 0.0, rng.randf_range(27.0, 33.0))
+		else:
+			pos = Vector3(rng.randf_range(-20.5, -15.5), 0.0, rng.randf_range(-map_half + 10.0, 19.0))
+		match i % 3:
+			0:
+				box(pos + Vector3(0, 0.6, 0), Vector3(4.0, 1.2, 0.9), concrete, true)
+			1:
+				crate(pos, 1.3)
+			_:
+				box(pos + Vector3(0, 0.9, 0), Vector3(1.0, 1.8, 1.0), mat(accent.darkened(0.15), 0.6), true)
 
 # ==================================================
 # PRÉDIOS DE FUNDO + PAREDES INVISÍVEIS

@@ -11,12 +11,18 @@ config_version=5
 [application]
 
 config/name="vava"
-run/main_scene="uid://bs1l51fnpfjmy"
+run/main_scene="res://lobby.tscn"
 config/features=PackedStringArray("4.7", "Forward Plus")
 config/icon="res://icon.svg"
 
+[autoload]
+
+GameState="*res://game_state.gd"
+
 [display]
 
+window/size/viewport_width=1280
+window/size/viewport_height=720
 window/size/initial_position_type=0
 window/size/initial_position=Vector2i(21, 0)
 window/stretch/mode="canvas_items"
