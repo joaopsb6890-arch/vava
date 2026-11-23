@@ -384,6 +384,14 @@ func _team_of(n) -> String:
 	var t = n.get("team")
 	return str(t) if t != null else ""
 
+func _read_property(node: Object, property_name: String):
+	if node == null or not is_instance_valid(node):
+		return null
+	for property_info in node.get_property_list():
+		if str(property_info.get("name", "")) == property_name:
+			return node.get(property_name)
+	return null
+
 func _setup_csharp_brain() -> void:
 	# Classes C# [GlobalClass] ficam registadas no ClassDB depois da
 	# compilação da assembly pelo editor Godot .NET.
@@ -421,14 +429,14 @@ func _acquire_target():
 		# A perceção/linha de visão continua a ser validada em GDScript antes daqui.
 		var score := -d
 		if bot_brain != null:
-			var marked_value = n.get("mark_t")
+			var marked_value = _read_property(n, "mark_t")
 			var is_marked := marked_value != null and float(marked_value) > 0.0
-			var hp_value = n.get("hp")
-			var max_hp_value = n.get("max_hp")
+			var hp_value = _read_property(n, "hp")
+			var max_hp_value = _read_property(n, "max_hp")
 			if hp_value == null:
-				hp_value = n.get("health")
+				hp_value = _read_property(n, "health")
 			if max_hp_value == null:
-				max_hp_value = n.get("max_health")
+				max_hp_value = _read_property(n, "max_health")
 			var health_ratio := 1.0
 			if hp_value != null and max_hp_value != null and float(max_hp_value) > 0.0:
 				health_ratio = clampf(float(hp_value) / float(max_hp_value), 0.0, 1.0)
@@ -441,7 +449,7 @@ func _acquire_target():
 		target = best
 		reaction_t = reaction_time + randf() * 0.18
 		if bot_brain != null and best != null:
-			var mark_value = best.get("mark_t")
+			var mark_value = _read_property(best, "mark_t")
 			var pressure := 0.5 if mark_value != null and float(mark_value) > 0.0 else 0.0
 			reaction_t = float(bot_brain.call("AdjustReaction", reaction_t, pressure))
 		burst_left = randi_range(3, 6)
