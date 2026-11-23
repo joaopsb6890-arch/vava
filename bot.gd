@@ -111,6 +111,7 @@ func setup(cfg: Dictionary) -> void:
 func _ready():
 	add_to_group("bot")
 	add_to_group("enemy" if team == "defense" else "ally")
+	_setup_csharp_brain()
 	collision_layer = 1
 	collision_mask = 1
 
@@ -382,9 +383,19 @@ func _team_of(n) -> String:
 	var t = n.get("team")
 	return str(t) if t != null else ""
 
+func _setup_csharp_brain() -> void:
+	# O projeto continua a funcionar com a seleção GDScript caso a assembly
+	# C# ainda não tenha sido compilada no editor .NET.
+	var brain_script: Script = load("res://scripts/csharp/AI/BotBrain.cs") as Script
+	if brain_script != null:
+		var instance = brain_script.new()
+		if instance is RefCounted:
+			bot_brain = instance
+
+
 func _acquire_target():
 	var best = null
-	var best_d := 1.0e20
+	var best_score := -1.0e20
 	for n in _candidates():
 		if n == self or not is_instance_valid(n) or not (n is Node3D):
 			continue
@@ -398,9 +409,14 @@ func _acquire_target():
 			continue
 		if not _can_see(n):
 			continue
-		if d < best_d:
+
+		# C# avalia a prioridade; o fallback mantém o comportamento anterior.
+		var score := -d
+		if bot_brain != null:
+			score = float(bot_brain.call("ScoreCandidate", d, n == target))
+		if score > best_score:
 			best = n
-			best_d = d
+			best_score = score
 
 	if best != target:
 		target = best
