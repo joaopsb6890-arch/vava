@@ -689,6 +689,10 @@ func buy_index(index: int) -> bool:
 		if hud:
 			hud.toast("Créditos insuficientes")
 		return false
+	if str(item.slot) == "armor" and player and float(player.armor) >= 50.0:
+		if hud:
+			hud.toast("O escudo já está completo")
+		return false
 	credits -= price
 	match str(item.slot):
 		"primary":
