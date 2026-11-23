@@ -53,6 +53,7 @@ var spawned_at := Vector3.ZERO
 
 # Combate
 var target = null
+var bot_brain: RefCounted
 var target_visible := false
 var think_t := 0.0
 var reaction_t := 0.0
