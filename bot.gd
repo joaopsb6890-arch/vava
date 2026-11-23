@@ -417,10 +417,22 @@ func _acquire_target():
 		if not _can_see(n):
 			continue
 
-		# C# avalia a prioridade; o fallback mantém o comportamento anterior.
+		# O C# combina distância, estabilidade do alvo, marcação e vida restante.
+		# A perceção/linha de visão continua a ser validada em GDScript antes daqui.
 		var score := -d
 		if bot_brain != null:
-			score = float(bot_brain.call("ScoreCandidate", d, n == target))
+			var marked_value = n.get("mark_t")
+			var is_marked := marked_value != null and float(marked_value) > 0.0
+			var hp_value = n.get("hp")
+			var max_hp_value = n.get("max_hp")
+			if hp_value == null:
+				hp_value = n.get("health")
+			if max_hp_value == null:
+				max_hp_value = n.get("max_health")
+			var health_ratio := 1.0
+			if hp_value != null and max_hp_value != null and float(max_hp_value) > 0.0:
+				health_ratio = clampf(float(hp_value) / float(max_hp_value), 0.0, 1.0)
+			score = float(bot_brain.call("ScoreCandidate", d, n == target, is_marked, health_ratio))
 		if score > best_score:
 			best = n
 			best_score = score
