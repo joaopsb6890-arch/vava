@@ -385,13 +385,19 @@ func _team_of(n) -> String:
 	return str(t) if t != null else ""
 
 func _setup_csharp_brain() -> void:
-	# O projeto continua a funcionar com a seleção GDScript caso a assembly
-	# C# ainda não tenha sido compilada no editor .NET.
-	var brain_script: Script = load("res://scripts/csharp/AI/BotBrain.cs") as Script
-	if brain_script != null:
-		var instance = brain_script.new()
-		if instance is RefCounted:
-			bot_brain = instance
+	# Classes C# [GlobalClass] ficam registadas no ClassDB depois da
+	# compilação da assembly pelo editor Godot .NET.
+	if not ClassDB.class_exists("BotBrain"):
+		push_warning("BotBrain C# não está compilado. A IA vai usar o fallback GDScript.")
+		return
+
+	var instance: Object = ClassDB.instantiate("BotBrain")
+	if instance is RefCounted:
+		bot_brain = instance as RefCounted
+	else:
+		push_warning("Não foi possível criar BotBrain. A IA vai usar o fallback GDScript.")
+		if is_instance_valid(instance):
+			instance.free()
 
 
 func _acquire_target():
