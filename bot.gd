@@ -185,6 +185,9 @@ func _build_visuals():
 	_mesh(_box(Vector3(0.14, 0.58, 0.16)), _mat(suit.darkened(0.25)), Vector3(-0.38, 1.05, 0), body_root)
 	_mesh(_box(Vector3(0.14, 0.58, 0.16)), _mat(suit.darkened(0.25)), Vector3(0.38, 1.05, 0), body_root)
 
+	# Camadas táticas adicionais: placas, bolsos, joelheiras e equipamento.
+	_build_agent_armor(suit, accent, dark)
+
 	# cabeça
 	head_node = Node3D.new()
 	head_node.position = Vector3(0, 1.66, 0)
@@ -203,6 +206,13 @@ func _build_visuals():
 	_mesh(_box(Vector3(0.08, 0.10, 0.52)), _mat(Color(0.12, 0.14, 0.17)), Vector3.ZERO, gun_root)
 	_mesh(_box(Vector3(0.05, 0.05, 0.26)), _mat(Color(0.32, 0.36, 0.42)), Vector3(0, 0.01, -0.34), gun_root)
 	_mesh(_box(Vector3(0.06, 0.14, 0.10)), _mat(Color(0.09, 0.10, 0.12)), Vector3(0, -0.10, 0.10), gun_root)
+
+	# Componentes visíveis da arma: carregador, mira, guarda-mão e cano.
+	_mesh(_box(Vector3(0.055, 0.17, 0.12)), _mat(Color(0.075, 0.085, 0.10)), Vector3(0, -0.12, -0.02), gun_root)
+	_mesh(_box(Vector3(0.075, 0.045, 0.11)), _mat(Color(0.24, 0.28, 0.32), 0.08), Vector3(0, 0.075, -0.10), gun_root)
+	_mesh(_box(Vector3(0.045, 0.045, 0.12)), _mat(Color(0.08, 0.09, 0.11)), Vector3(0, 0.085, -0.13), gun_root)
+	_mesh(_box(Vector3(0.095, 0.065, 0.20)), _mat(Color(0.16, 0.19, 0.22)), Vector3(0, 0.0, -0.29), gun_root)
+	_mesh(_box(Vector3(0.035, 0.035, 0.18)), _mat(accent.darkened(0.2), 0.12), Vector3(0, 0.055, -0.29), gun_root)
 
 	muzzle_light = OmniLight3D.new()
 	muzzle_light.light_color = Color(1.0, 0.78, 0.4)
@@ -266,6 +276,43 @@ func _build_visuals():
 	tracer_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 	tracer_mat.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
 	tracer_mat.albedo_color = Color(1.0, 0.85, 0.55, 0.85)
+
+
+func _build_agent_armor(suit: Color, accent: Color, dark: Color) -> void:
+	# Peitoral em duas camadas e placas laterais.
+	var armor_mat := _mat(suit.darkened(0.32))
+	var trim_mat := _mat(accent.darkened(0.18), 0.12)
+	var fabric_mat := _mat(suit.darkened(0.08))
+	_mesh(_box(Vector3(0.48, 0.46, 0.12)), armor_mat, Vector3(0, 1.12, -0.205), body_root)
+	_mesh(_box(Vector3(0.30, 0.12, 0.035)), trim_mat, Vector3(0, 1.22, -0.274), body_root)
+	_mesh(_box(Vector3(0.12, 0.30, 0.10)), armor_mat, Vector3(-0.25, 1.05, -0.02), body_root)
+	_mesh(_box(Vector3(0.12, 0.30, 0.10)), armor_mat, Vector3(0.25, 1.05, -0.02), body_root)
+
+	# Ombreiras, proteções dos antebraços e luvas.
+	_mesh(_box(Vector3(0.23, 0.18, 0.22)), trim_mat, Vector3(-0.39, 1.31, 0), body_root)
+	_mesh(_box(Vector3(0.23, 0.18, 0.22)), trim_mat, Vector3(0.39, 1.31, 0), body_root)
+	_mesh(_box(Vector3(0.18, 0.25, 0.19)), armor_mat, Vector3(-0.43, 0.91, -0.01), body_root)
+	_mesh(_box(Vector3(0.18, 0.25, 0.19)), armor_mat, Vector3(0.43, 0.91, -0.01), body_root)
+	_mesh(_box(Vector3(0.17, 0.13, 0.18)), _mat(dark), Vector3(-0.43, 0.72, -0.01), body_root)
+	_mesh(_box(Vector3(0.17, 0.13, 0.18)), _mat(dark), Vector3(0.43, 0.72, -0.01), body_root)
+
+	# Cinto modular e bolsas laterais.
+	_mesh(_box(Vector3(0.48, 0.12, 0.28)), _mat(dark), Vector3(0, 0.73, 0), body_root)
+	_mesh(_box(Vector3(0.11, 0.16, 0.12)), fabric_mat, Vector3(-0.29, 0.72, -0.015), body_root)
+	_mesh(_box(Vector3(0.11, 0.16, 0.12)), fabric_mat, Vector3(0.29, 0.72, -0.015), body_root)
+	_mesh(_box(Vector3(0.10, 0.11, 0.035)), trim_mat, Vector3(0, 0.73, -0.15), body_root)
+
+	# Joelheiras e botas reforçadas.
+	_mesh(_box(Vector3(0.20, 0.18, 0.24)), trim_mat, Vector3(-0.13, 0.28, -0.045), body_root)
+	_mesh(_box(Vector3(0.20, 0.18, 0.24)), trim_mat, Vector3(0.13, 0.28, -0.045), body_root)
+	_mesh(_box(Vector3(0.22, 0.16, 0.34)), _mat(dark), Vector3(-0.13, 0.09, -0.055), body_root)
+	_mesh(_box(Vector3(0.22, 0.16, 0.34)), _mat(dark), Vector3(0.13, 0.09, -0.055), body_root)
+
+	# Mochila compacta e antena de comunicação.
+	_mesh(_box(Vector3(0.34, 0.48, 0.17)), fabric_mat, Vector3(0, 1.08, 0.205), body_root)
+	_mesh(_box(Vector3(0.25, 0.12, 0.06)), armor_mat, Vector3(0, 1.28, 0.30), body_root)
+	_mesh(_box(Vector3(0.035, 0.28, 0.035)), trim_mat, Vector3(0.17, 1.48, 0.23), body_root)
+
 
 func _billboard_mat(color: Color) -> StandardMaterial3D:
 	var m := StandardMaterial3D.new()
