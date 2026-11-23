@@ -144,6 +144,8 @@ Cena extra: `node_3d.tscn` abre o mapa com alvos de treino (sem bots), útil par
 | `match.gd` / `match.tscn` | gestor da partida: spawns, rondas, spike, loja, placar, fim |
 | `match_hud.gd` | HUD da partida: cronómetro, placar, barras, loja, killfeed, Tab, ecrã final |
 | `bot.gd` | NPC de combate (IA, perceção, tiro, flash/mark, reset de ronda) |
+| `scripts/csharp/AI/BotBrain.cs` | pontuação C# dos alvos dos bots |
+| `vava.csproj` | configuração do projeto Godot .NET |
 | `player.gd` | controlador FPS (movimento, câmara, dano) + sistema de habilidades dos 6 agentes |
 | `weapon_manager.gd` | arsenal, viewmodels, recuo, recarga, dano por zona, munição |
 | `map.gd` | gerador do mapa (edifícios, ruas, parque, viaduto, cobertura, sites) |
