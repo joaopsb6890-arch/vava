@@ -82,6 +82,24 @@ Esta versão inclui uma primeira passagem de melhorias sobre o projeto existente
 
 Estas alterações estão numa branch de desenvolvimento e precisam de ser testadas no Godot 4.7 antes de serem integradas na versão principal.
 
+## Arquitetura híbrida (GDScript + C#)
+
+O projeto começa a usar C# de forma gradual, sem converter o jogo inteiro:
+
+- **GDScript:** movimento do jogador, câmara, habilidades, armas, modelos, HUD, mapas e ciclo principal da partida.
+- **C#:** componentes de decisão e lógica intensiva que beneficiem de uma implementação compilada.
+- **Integração inicial:** `scripts/csharp/AI/BotBrain.cs` calcula a pontuação dos alvos; `bot.gd` continua responsável pela perceção (raycast), movimento, disparos e apresentação.
+- **Fallback:** se o componente C# ainda não estiver carregado, o bot usa a pontuação simples em GDScript.
+
+### Requisitos para compilar C#
+
+1. Usar a edição **Godot 4.7 .NET** (não a edição standard).
+2. Instalar o **.NET SDK 8.0 ou superior**.
+3. Abrir o projeto e compilar a solução C# pelo editor Godot antes de testar a IA.
+4. Confirmar que não existem erros no painel **Output**.
+
+O projeto C# está configurado em `vava.csproj`. A primeira integração é pequena de propósito: permite validar a compilação e a comunicação antes de migrar decisões mais complexas dos bots.
+
 ## Como correr
 
 1. Abre o **Godot 4.7**.
