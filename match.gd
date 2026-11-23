@@ -373,6 +373,12 @@ func _start_round():
 func _begin_live():
 	print("[Match] combate! site alvo=%s" % attack_site)
 	state = STATE_LIVE
+	# Reposiciona os bots defensores para manter pressão nos dois sites.
+	for i in range(enemies.size()):
+		var site_letter := "A" if i % 2 == 0 else "B"
+		enemies[i].set_objective(sites[site_letter], 10.0)
+	for ally in allies:
+		ally.set_objective(sites[attack_site], 7.0)
 	if buy_open:
 		buy_open = false
 		if player:
