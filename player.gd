@@ -266,7 +266,7 @@ func _ready():
 	if kit.is_empty():
 		configure_agent(GameState.get_agent("jett"))
 	health = max_health
-	armor = start_armor
+	armor = 0.0 if match_mode else start_armor
 	ult_points = mini(start_ult_points, ult_cost)
 	_reset_kit()
 
@@ -1235,7 +1235,7 @@ func revive_at(pos: Vector3) -> void:
 	global_position = pos
 	velocity = Vector3.ZERO
 	health = max_health
-	armor = start_armor
+	armor = 0.0 if match_mode else start_armor
 	is_dashing = false
 	dead = false
 	ult_active = false
