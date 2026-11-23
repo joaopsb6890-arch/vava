@@ -997,6 +997,19 @@ func _placeholder(w: WeaponDef) -> Node3D:
 		_add_vm_box(model, Vector3(0.085, 0.17, 0.11), Vector3(0.0, -0.13, -0.12), body)
 		_add_vm_box(model, Vector3(0.055, 0.025, 0.42), Vector3(0.0, 0.078, -0.13), metal)
 		_add_vm_box(model, Vector3(0.018, 0.018, 0.34), Vector3(0.0, 0.095, -0.16), accent)
+		# Detalhes adicionais do receiver e da ergonomia do rifle.
+		_add_vm_box(model, Vector3(0.145, 0.075, 0.22), Vector3(0.0, -0.045, -0.12), dark)
+		_add_vm_box(model, Vector3(0.145, 0.045, 0.16), Vector3(0.0, 0.075, -0.05), body)
+		_add_vm_box(model, Vector3(0.025, 0.018, 0.30), Vector3(-0.078, 0.085, -0.16), metal)
+		_add_vm_box(model, Vector3(0.025, 0.018, 0.30), Vector3(0.078, 0.085, -0.16), metal)
+		_add_vm_box(model, Vector3(0.11, 0.035, 0.07), Vector3(0.0, 0.145, -0.10), dark)
+		_add_vm_box(model, Vector3(0.035, 0.035, 0.045), Vector3(0.0, 0.17, -0.10), accent)
+		_add_vm_box(model, Vector3(0.105, 0.025, 0.055), Vector3(0.0, -0.225, 0.10), metal)
+		_add_vm_box(model, Vector3(0.14, 0.025, 0.035), Vector3(0.0, 0.0, -0.60), dark)
+		_add_vm_box(model, Vector3(0.11, 0.018, 0.025), Vector3(0.0, 0.055, -0.58), accent)
+		# Ranhuras laterais do carregador.
+		for groove in range(3):
+			_add_vm_box(model, Vector3(0.006, 0.018, 0.075), Vector3(-0.041, -0.14, 0.02 + groove * 0.045), metal)
 		_add_vm_box(model, Vector3(0.07, 0.055, 0.055), Vector3(0.0, 0.12, -0.04), dark)
 	return model
 
