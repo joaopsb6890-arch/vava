@@ -264,12 +264,20 @@ func set_defuse_prompt(frac: float, near: bool):
 # ---------- KILLFEED ----------
 
 func _build_feed():
+	var feed_header := _label("REGISTO DE COMBATE", 10, DIM, HORIZONTAL_ALIGNMENT_RIGHT)
+	feed_header.set_anchors_and_offsets_preset(Control.PRESET_TOP_RIGHT)
+	feed_header.offset_left = -340
+	feed_header.offset_right = -18
+	feed_header.offset_top = 94
+	feed_header.offset_bottom = 112
+	root.add_child(feed_header)
+
 	feed = VBoxContainer.new()
 	feed.set_anchors_and_offsets_preset(Control.PRESET_TOP_RIGHT)
 	feed.offset_left = -340
 	feed.offset_right = -18
-	feed.offset_top = 104
-	feed.offset_bottom = 420
+	feed.offset_top = 116
+	feed.offset_bottom = 432
 	feed.add_theme_constant_override("separation", 3)
 	feed.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	root.add_child(feed)

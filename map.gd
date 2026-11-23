@@ -74,6 +74,7 @@ func _ready():
 	_build_park()
 	_build_plaza_props()
 	_build_extra_cover()
+	_build_tactical_details()
 	_build_border()
 	if spawn_dummies:
 		_spawn_dummies()
@@ -670,6 +671,50 @@ func _build_extra_cover() -> void:
 				crate(pos, 1.3)
 			_:
 				box(pos + Vector3(0, 0.9, 0), Vector3(1.0, 1.8, 1.0), mat(accent.darkened(0.15), 0.6), true)
+
+# ==================================================
+# DETALHES TÁTICOS / AMBIENTAÇÃO
+# ==================================================
+
+func _build_tactical_details() -> void:
+	var accent: Color = theme.get("accent", C_ORANGE)
+	var metal := mat(Color(0.12, 0.16, 0.19), 0.55)
+	var trim := mat(accent, 0.55, 0.18)
+	var concrete := mat(C_PAVE.darkened(0.18), 0.92)
+	var glass := mat(Color(0.22, 0.48, 0.58), 0.22, 0.35)
+
+	# Marcos de orientação e pequenos painéis luminosos nas entradas das rotas.
+	for i in range(6):
+		var z := -42.0 + float(i) * 16.0
+		box(Vector3(-25.4, 1.15, z), Vector3(0.18, 2.3, 0.18), metal, false)
+		box(Vector3(-25.28, 1.75, z), Vector3(0.08, 0.48, 0.34), trim, false)
+		box(Vector3(-25.27, 1.12, z), Vector3(0.07, 0.08, 0.28), glass, false)
+
+	# Caixas de utilidade e ventilação junto a paredes (sem colisões extras).
+	for i in range(8):
+		var side := -1.0 if i % 2 == 0 else 1.0
+		var x := side * (38.0 + float(i % 3) * 5.0)
+		var z := -48.0 + float(i) * 13.0
+		box(Vector3(x, 0.65, z), Vector3(1.25, 1.3, 0.9), concrete, false)
+		box(Vector3(x, 1.34, z), Vector3(1.30, 0.08, 0.94), trim, false)
+		for vent in range(3):
+			box(Vector3(x - 0.36 + float(vent) * 0.36, 0.70, z - 0.47),
+				Vector3(0.035, 0.48, 0.025), metal, false)
+
+	# Balizadores baixos nas esquinas e nas aproximações aos dois sites.
+	for site_key in ["site_a", "site_b"]:
+		var site: Vector3 = theme.get(site_key, Vector3.ZERO)
+		for i in range(4):
+			var ang := TAU * float(i) / 4.0 + PI * 0.25
+			var p := site + Vector3(cos(ang) * 7.0, 0.0, sin(ang) * 7.0)
+			cyl(p + Vector3(0, 0.42, 0), 0.12, 0.84, metal, false)
+			cyl(p + Vector3(0, 0.78, 0), 0.13, 0.12, trim, false)
+
+	# Faixas de tinta e numeração visual para leitura rápida das rotas.
+	for i in range(5):
+		var x := -9.0 + float(i) * 4.5
+		box(Vector3(x, 0.065, 40.0), Vector3(2.2, 0.012, 0.12), trim, false)
+	box(Vector3(-29.0, 0.065, 8.0), Vector3(0.12, 0.012, 5.0), trim, false)
 
 # ==================================================
 # PRÉDIOS DE FUNDO + PAREDES INVISÍVEIS

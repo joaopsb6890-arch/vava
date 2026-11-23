@@ -1,6 +1,6 @@
 # VAVA — Protocolo Tático
 
-Jogo de tiro tático em primeira pessoa inspirado em **Valorant**, feito **100% em GDScript** para **Godot 4.7**.
+Jogo de tiro tático em primeira pessoa inspirado em **Valorant**, feito com arquitetura híbrida **GDScript + C#** para **Godot 4.7 .NET**.
 
 Não existe uma única imagem de interface: lobby, cards de agente, ícones de habilidades, minimapa,
 radar, HUD, mira, loja, modelos 3D das armas, corpos dos NPCs e os mapas são **construídos por código**
@@ -52,7 +52,7 @@ Cada mapa tem paleta de céu/névoa/sol, dimensão, seed dos props e cobertura p
 - **Spike Rush**: tu + 2 aliados (ataque) contra 3 defensores. Chega a um site, segura `F` 4 s para
   plantar, defende 45 s; a defesa tenta desarmar (6 s). Primeira equipa a **5 rondas** ganha.
 - **Deathmatch**: respawns infinitos, primeira equipa a **20 eliminações**.
-- **Fase de compra** (9 s) com loja (`B` e teclas 1–6), créditos por ronda e por kill.
+- **Fase de compra** (9 s) com loja (`B`), arsenal alargado, créditos por ronda e por kill. No modo competitivo o jogador começa sem escudo e pode comprar 50 pontos de armadura.
 - Cronómetro, placar de equipas, estado do spike, barra de plantação/desarme, killfeed, placar no `Tab`
   e ecrã final com resultado.
 
@@ -60,14 +60,55 @@ Cada mapa tem paleta de céu/névoa/sol, dimensão, seed dos props e cobertura p
 | Arma | Tipo | Preço | Dano (cabeça/corpo/pernas) |
 |---|---|---|---|
 | Classic | pistola | 0 | 78 / 26 / 22 |
+| Shorty | escopeta | 300 | 24 / 12 / 10 por projétil |
+| Frenzy | pistola automática | 450 | 78 / 26 / 22 |
+| Ghost | pistola | 500 | 105 / 30 / 25 |
 | Sheriff | pistola | 800 | 159 / 55 / 46 |
+| Stinger | SMG | 1100 | 67 / 27 / 23 |
+| Bucky | escopeta | 850 | 34 / 17 / 14 por projétil |
+| Judge | escopeta automática | 1850 | 34 / 17 / 14 por projétil |
+| Ares | metralhadora | 1600 | 72 / 30 / 25 |
+| Bulldog | rifle | 2100 | 115 / 35 / 30 |
+| Guardian | rifle semiautomático | 2250 | 195 / 65 / 49 | 159 / 55 / 46 |
 | Spectre | SMG | 1600 | 78 / 26 / 22 |
 | Vandal | rifle | 2900 | 160 / 40 / 34 |
 | Phantom | rifle | 2900 | 156 / 39 / 33 |
+| Odin | metralhadora | 3200 | 95 / 38 / 32 |
 | Operator | sniper | 4700 | 255 / 150 / 120 |
 | Faca | corpo a corpo | — | 50 / 150 (forte) |
 
 ---
+
+## VAVA 2.0 — melhorias em desenvolvimento
+
+Esta versão inclui uma primeira passagem de melhorias sobre o projeto existente:
+
+- Modelos procedurais dos bots com mais equipamento tático e detalhes nas armas.
+- Modelos provisórios das armas em primeira pessoa com mais componentes visuais.
+- Movimento de câmara com inércia subtil para dar mais sensação de peso ao FPS.
+- Mapas com novos detalhes de rota, caixas técnicas, sinalização e marcadores nos sites.
+- HUD com identificação própria para o registo de combate.
+- Ajustes de objetivos dos bots no início da fase de combate.
+
+Estas alterações estão numa branch de desenvolvimento e precisam de ser testadas no Godot 4.7 antes de serem integradas na versão principal.
+
+## Arquitetura híbrida (GDScript + C#)
+
+O projeto começa a usar C# de forma gradual, sem converter o jogo inteiro:
+
+- **GDScript:** movimento do jogador, câmara, habilidades, armas, modelos, HUD, mapas e ciclo principal da partida.
+- **C#:** componentes de decisão e lógica intensiva que beneficiem de uma implementação compilada.
+- **Integração inicial:** `scripts/csharp/AI/BotBrain.cs` calcula a pontuação dos alvos; `bot.gd` continua responsável pela perceção (raycast), movimento, disparos e apresentação.
+- **Fallback:** se o componente C# ainda não estiver carregado, o bot usa a pontuação simples em GDScript.
+
+### Requisitos para compilar C#
+
+1. Usar a edição **Godot 4.7 .NET** (não a edição standard).
+2. Instalar o **.NET SDK 8.0 ou superior**.
+3. Abrir o projeto e compilar a solução C# pelo editor Godot antes de testar a IA.
+4. Confirmar que não existem erros no painel **Output**.
+
+O projeto C# está configurado em `vava.csproj`. A IA híbrida já usa C# para pontuar alvos por distância, estabilidade, marcação e vida restante, além de ajustar o tempo de reação. A perceção, a navegação, a física e a apresentação continuam em GDScript.
 
 ## Como correr
 
@@ -113,6 +154,8 @@ Cena extra: `node_3d.tscn` abre o mapa com alvos de treino (sem bots), útil par
 | `match.gd` / `match.tscn` | gestor da partida: spawns, rondas, spike, loja, placar, fim |
 | `match_hud.gd` | HUD da partida: cronómetro, placar, barras, loja, killfeed, Tab, ecrã final |
 | `bot.gd` | NPC de combate (IA, perceção, tiro, flash/mark, reset de ronda) |
+| `scripts/csharp/AI/BotBrain.cs` | pontuação C# dos alvos dos bots |
+| `vava.csproj` | configuração do projeto Godot .NET |
 | `player.gd` | controlador FPS (movimento, câmara, dano) + sistema de habilidades dos 6 agentes |
 | `weapon_manager.gd` | arsenal, viewmodels, recuo, recarga, dano por zona, munição |
 | `map.gd` | gerador do mapa (edifícios, ruas, parque, viaduto, cobertura, sites) |

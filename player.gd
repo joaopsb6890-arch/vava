@@ -146,6 +146,7 @@ void fragment() {
 
 var mouse_pitch := 0.0
 var camera_base_position := Vector3.ZERO
+var camera_motion_lag := Vector2.ZERO
 var spawn_position := Vector3.ZERO
 var move_time := 0.0
 var trauma := 0.0
@@ -265,7 +266,7 @@ func _ready():
 	if kit.is_empty():
 		configure_agent(GameState.get_agent("jett"))
 	health = max_health
-	armor = start_armor
+	armor = 0.0 if match_mode else start_armor
 	ult_points = mini(start_ult_points, ult_cost)
 	_reset_kit()
 
@@ -1234,7 +1235,7 @@ func revive_at(pos: Vector3) -> void:
 	global_position = pos
 	velocity = Vector3.ZERO
 	health = max_health
-	armor = start_armor
+	armor = 0.0 if match_mode else start_armor
 	is_dashing = false
 	dead = false
 	ult_active = false
@@ -1273,6 +1274,15 @@ func update_camera(delta):
 	# ALTURA (agachar + headbob + impacto de aterragem)
 	land_dip = lerpf(land_dip, 0.0, clampf(9.0 * delta, 0.0, 1.0))
 	var target_y := camera_base_position.y - crouch_depth * crouch_t - land_dip
+	# Inércia subtil da câmara: acompanha acelerações sem alterar a direção da mira.
+	var local_velocity := global_transform.basis.inverse() * Vector3(velocity.x, 0.0, velocity.z)
+	var lag_target := Vector2(clampf(-local_velocity.x * 0.0035, -0.035, 0.035),
+		clampf(local_velocity.z * 0.0018, -0.025, 0.025))
+	camera_motion_lag = camera_motion_lag.lerp(lag_target, clampf(7.0 * delta, 0.0, 1.0))
+	var target_x := camera_base_position.x + camera_motion_lag.x
+	var target_z := camera_base_position.z + camera_motion_lag.y
+	camera.position.x = lerpf(camera.position.x, target_x, clampf(10.0 * delta, 0.0, 1.0))
+	camera.position.z = lerpf(camera.position.z, target_z, clampf(10.0 * delta, 0.0, 1.0))
 	if is_on_floor() and horizontal_speed > 0.5 and not is_dashing:
 		move_time += delta * headbob_speed * (horizontal_speed / run_speed)
 		target_y += sin(move_time) * headbob_amount

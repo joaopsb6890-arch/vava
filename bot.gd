@@ -53,6 +53,7 @@ var spawned_at := Vector3.ZERO
 
 # Combate
 var target = null
+var bot_brain: RefCounted
 var target_visible := false
 var think_t := 0.0
 var reaction_t := 0.0
@@ -111,6 +112,7 @@ func setup(cfg: Dictionary) -> void:
 func _ready():
 	add_to_group("bot")
 	add_to_group("enemy" if team == "defense" else "ally")
+	_setup_csharp_brain()
 	collision_layer = 1
 	collision_mask = 1
 
@@ -185,6 +187,9 @@ func _build_visuals():
 	_mesh(_box(Vector3(0.14, 0.58, 0.16)), _mat(suit.darkened(0.25)), Vector3(-0.38, 1.05, 0), body_root)
 	_mesh(_box(Vector3(0.14, 0.58, 0.16)), _mat(suit.darkened(0.25)), Vector3(0.38, 1.05, 0), body_root)
 
+	# Camadas táticas adicionais: placas, bolsos, joelheiras e equipamento.
+	_build_agent_armor(suit, accent, dark)
+
 	# cabeça
 	head_node = Node3D.new()
 	head_node.position = Vector3(0, 1.66, 0)
@@ -203,6 +208,13 @@ func _build_visuals():
 	_mesh(_box(Vector3(0.08, 0.10, 0.52)), _mat(Color(0.12, 0.14, 0.17)), Vector3.ZERO, gun_root)
 	_mesh(_box(Vector3(0.05, 0.05, 0.26)), _mat(Color(0.32, 0.36, 0.42)), Vector3(0, 0.01, -0.34), gun_root)
 	_mesh(_box(Vector3(0.06, 0.14, 0.10)), _mat(Color(0.09, 0.10, 0.12)), Vector3(0, -0.10, 0.10), gun_root)
+
+	# Componentes visíveis da arma: carregador, mira, guarda-mão e cano.
+	_mesh(_box(Vector3(0.055, 0.17, 0.12)), _mat(Color(0.075, 0.085, 0.10)), Vector3(0, -0.12, -0.02), gun_root)
+	_mesh(_box(Vector3(0.075, 0.045, 0.11)), _mat(Color(0.24, 0.28, 0.32), 0.08), Vector3(0, 0.075, -0.10), gun_root)
+	_mesh(_box(Vector3(0.045, 0.045, 0.12)), _mat(Color(0.08, 0.09, 0.11)), Vector3(0, 0.085, -0.13), gun_root)
+	_mesh(_box(Vector3(0.095, 0.065, 0.20)), _mat(Color(0.16, 0.19, 0.22)), Vector3(0, 0.0, -0.29), gun_root)
+	_mesh(_box(Vector3(0.035, 0.035, 0.18)), _mat(accent.darkened(0.2), 0.12), Vector3(0, 0.055, -0.29), gun_root)
 
 	muzzle_light = OmniLight3D.new()
 	muzzle_light.light_color = Color(1.0, 0.78, 0.4)
@@ -266,6 +278,43 @@ func _build_visuals():
 	tracer_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 	tracer_mat.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
 	tracer_mat.albedo_color = Color(1.0, 0.85, 0.55, 0.85)
+
+
+func _build_agent_armor(suit: Color, accent: Color, dark: Color) -> void:
+	# Peitoral em duas camadas e placas laterais.
+	var armor_mat := _mat(suit.darkened(0.32))
+	var trim_mat := _mat(accent.darkened(0.18), 0.12)
+	var fabric_mat := _mat(suit.darkened(0.08))
+	_mesh(_box(Vector3(0.48, 0.46, 0.12)), armor_mat, Vector3(0, 1.12, -0.205), body_root)
+	_mesh(_box(Vector3(0.30, 0.12, 0.035)), trim_mat, Vector3(0, 1.22, -0.274), body_root)
+	_mesh(_box(Vector3(0.12, 0.30, 0.10)), armor_mat, Vector3(-0.25, 1.05, -0.02), body_root)
+	_mesh(_box(Vector3(0.12, 0.30, 0.10)), armor_mat, Vector3(0.25, 1.05, -0.02), body_root)
+
+	# Ombreiras, proteções dos antebraços e luvas.
+	_mesh(_box(Vector3(0.23, 0.18, 0.22)), trim_mat, Vector3(-0.39, 1.31, 0), body_root)
+	_mesh(_box(Vector3(0.23, 0.18, 0.22)), trim_mat, Vector3(0.39, 1.31, 0), body_root)
+	_mesh(_box(Vector3(0.18, 0.25, 0.19)), armor_mat, Vector3(-0.43, 0.91, -0.01), body_root)
+	_mesh(_box(Vector3(0.18, 0.25, 0.19)), armor_mat, Vector3(0.43, 0.91, -0.01), body_root)
+	_mesh(_box(Vector3(0.17, 0.13, 0.18)), _mat(dark), Vector3(-0.43, 0.72, -0.01), body_root)
+	_mesh(_box(Vector3(0.17, 0.13, 0.18)), _mat(dark), Vector3(0.43, 0.72, -0.01), body_root)
+
+	# Cinto modular e bolsas laterais.
+	_mesh(_box(Vector3(0.48, 0.12, 0.28)), _mat(dark), Vector3(0, 0.73, 0), body_root)
+	_mesh(_box(Vector3(0.11, 0.16, 0.12)), fabric_mat, Vector3(-0.29, 0.72, -0.015), body_root)
+	_mesh(_box(Vector3(0.11, 0.16, 0.12)), fabric_mat, Vector3(0.29, 0.72, -0.015), body_root)
+	_mesh(_box(Vector3(0.10, 0.11, 0.035)), trim_mat, Vector3(0, 0.73, -0.15), body_root)
+
+	# Joelheiras e botas reforçadas.
+	_mesh(_box(Vector3(0.20, 0.18, 0.24)), trim_mat, Vector3(-0.13, 0.28, -0.045), body_root)
+	_mesh(_box(Vector3(0.20, 0.18, 0.24)), trim_mat, Vector3(0.13, 0.28, -0.045), body_root)
+	_mesh(_box(Vector3(0.22, 0.16, 0.34)), _mat(dark), Vector3(-0.13, 0.09, -0.055), body_root)
+	_mesh(_box(Vector3(0.22, 0.16, 0.34)), _mat(dark), Vector3(0.13, 0.09, -0.055), body_root)
+
+	# Mochila compacta e antena de comunicação.
+	_mesh(_box(Vector3(0.34, 0.48, 0.17)), fabric_mat, Vector3(0, 1.08, 0.205), body_root)
+	_mesh(_box(Vector3(0.25, 0.12, 0.06)), armor_mat, Vector3(0, 1.28, 0.30), body_root)
+	_mesh(_box(Vector3(0.035, 0.28, 0.035)), trim_mat, Vector3(0.17, 1.48, 0.23), body_root)
+
 
 func _billboard_mat(color: Color) -> StandardMaterial3D:
 	var m := StandardMaterial3D.new()
@@ -335,9 +384,33 @@ func _team_of(n) -> String:
 	var t = n.get("team")
 	return str(t) if t != null else ""
 
+func _read_property(node: Object, property_name: String):
+	if node == null or not is_instance_valid(node):
+		return null
+	for property_info in node.get_property_list():
+		if str(property_info.get("name", "")) == property_name:
+			return node.get(property_name)
+	return null
+
+func _setup_csharp_brain() -> void:
+	# Classes C# [GlobalClass] ficam registadas no ClassDB depois da
+	# compilação da assembly pelo editor Godot .NET.
+	if not ClassDB.class_exists("BotBrain"):
+		push_warning("BotBrain C# não está compilado. A IA vai usar o fallback GDScript.")
+		return
+
+	var instance: Object = ClassDB.instantiate("BotBrain")
+	if instance is RefCounted:
+		bot_brain = instance as RefCounted
+	else:
+		push_warning("Não foi possível criar BotBrain. A IA vai usar o fallback GDScript.")
+		if is_instance_valid(instance):
+			instance.free()
+
+
 func _acquire_target():
 	var best = null
-	var best_d := 1.0e20
+	var best_score := -1.0e20
 	for n in _candidates():
 		if n == self or not is_instance_valid(n) or not (n is Node3D):
 			continue
@@ -351,13 +424,34 @@ func _acquire_target():
 			continue
 		if not _can_see(n):
 			continue
-		if d < best_d:
+
+		# O C# combina distância, estabilidade do alvo, marcação e vida restante.
+		# A perceção/linha de visão continua a ser validada em GDScript antes daqui.
+		var score := -d
+		if bot_brain != null:
+			var marked_value = _read_property(n, "mark_t")
+			var is_marked := marked_value != null and float(marked_value) > 0.0
+			var hp_value = _read_property(n, "hp")
+			var max_hp_value = _read_property(n, "max_hp")
+			if hp_value == null:
+				hp_value = _read_property(n, "health")
+			if max_hp_value == null:
+				max_hp_value = _read_property(n, "max_health")
+			var health_ratio := 1.0
+			if hp_value != null and max_hp_value != null and float(max_hp_value) > 0.0:
+				health_ratio = clampf(float(hp_value) / float(max_hp_value), 0.0, 1.0)
+			score = float(bot_brain.call("ScoreCandidate", d, n == target, is_marked, health_ratio))
+		if score > best_score:
 			best = n
-			best_d = d
+			best_score = score
 
 	if best != target:
 		target = best
 		reaction_t = reaction_time + randf() * 0.18
+		if bot_brain != null and best != null:
+			var mark_value = _read_property(best, "mark_t")
+			var pressure := 0.5 if mark_value != null and float(mark_value) > 0.0 else 0.0
+			reaction_t = float(bot_brain.call("AdjustReaction", reaction_t, pressure))
 		burst_left = randi_range(3, 6)
 		fire_t = 0.0
 		if best != null:

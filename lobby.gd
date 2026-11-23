@@ -120,8 +120,8 @@ func _build_header() -> Control:
 
 	var titles := VBoxContainer.new()
 	titles.add_theme_constant_override("separation", 0)
-	titles.add_child(_label("VAVA", 46, TEXT))
-	titles.add_child(_label("PROTOCOLO TÁTICO  //  BOTS  //  TUDO GERADO POR CÓDIGO", 12, ACCENT))
+	titles.add_child(_label("VAVA 2.0", 46, TEXT))
+	titles.add_child(_label("PROTOCOLO TÁTICO  //  FPS COMPETITIVO  //  CONSTRUÍDO EM GODOT", 12, ACCENT))
 	row.add_child(titles)
 
 	var spacer := Control.new()
