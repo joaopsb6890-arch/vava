@@ -231,6 +231,86 @@ func _build_defs():
 		"muzzle": vandal_muzzle, "price": 2900, "axis": vandal_axis_correction,
 	})
 
+	_gun("ghost", "GHOST", {
+		"slot": "secondary", "auto": false, "rate": 6.5, "head": 105.0, "body": 30.0, "leg": 25.0,
+		"mag": 15, "reserve": 45, "reload": 1.8, "equip": 0.5, "range": 180.0,
+		"spread_base": 0.18, "spread_move": 2.2, "spread_air": 3.0, "spread_burst": 0.12,
+		"length": 0.46, "pos": Vector3(0.28, -0.24, -0.62), "rot": Vector3(0.0, -6.0, -2.0),
+		"muzzle": Vector3(0.14, -0.13, -0.64), "price": 500,
+	})
+
+	_gun("frenzy", "FRENZY", {
+		"slot": "secondary", "auto": true, "rate": 16.0, "head": 78.0, "body": 26.0, "leg": 22.0,
+		"mag": 13, "reserve": 39, "reload": 1.9, "equip": 0.5, "range": 120.0,
+		"spread_base": 0.45, "spread_move": 2.8, "spread_air": 3.8, "spread_burst": 0.18,
+		"length": 0.42, "pos": Vector3(0.28, -0.24, -0.62), "rot": Vector3(0.0, -6.0, -2.0),
+		"muzzle": Vector3(0.14, -0.13, -0.60), "price": 450,
+	})
+
+	_gun("shorty", "SHORTY", {
+		"slot": "secondary", "auto": false, "rate": 3.3, "head": 24.0, "body": 12.0, "leg": 10.0,
+		"mag": 2, "reserve": 10, "reload": 1.9, "equip": 0.45, "range": 35.0,
+		"spread_base": 3.2, "spread_move": 3.8, "spread_air": 4.5, "spread_burst": 0.0,
+		"length": 0.40, "pos": Vector3(0.28, -0.24, -0.62), "rot": Vector3(0.0, -6.0, -2.0),
+		"muzzle": Vector3(0.14, -0.13, -0.60), "price": 300,
+	})
+
+	_gun("stinger", "STINGER", {
+		"slot": "primary", "auto": true, "rate": 18.0, "head": 67.0, "body": 27.0, "leg": 23.0,
+		"mag": 20, "reserve": 60, "reload": 2.25, "equip": 0.65, "range": 150.0,
+		"spread_base": 0.3, "spread_move": 2.4, "spread_air": 3.4, "spread_burst": 0.12,
+		"length": 0.62, "pos": Vector3(0.30, -0.25, -0.68), "rot": Vector3(0.0, -8.0, -3.0),
+		"muzzle": Vector3(0.17, -0.15, -0.82), "price": 1100,
+	})
+
+	_gun("bulldog", "BULLDOG", {
+		"slot": "primary", "auto": true, "rate": 10.0, "head": 115.0, "body": 35.0, "leg": 30.0,
+		"mag": 24, "reserve": 72, "reload": 2.5, "equip": 0.75, "range": 250.0,
+		"spread_base": 0.08, "spread_move": 2.4, "spread_air": 3.6, "spread_burst": 0.06,
+		"length": 0.92, "pos": Vector3(0.30, -0.25, -0.70), "rot": Vector3(0.0, -8.0, -3.0),
+		"muzzle": Vector3(0.18, -0.16, -1.02), "price": 2100,
+	})
+
+	_gun("guardian", "GUARDIAN", {
+		"slot": "primary", "auto": false, "rate": 5.25, "head": 195.0, "body": 65.0, "leg": 49.0,
+		"mag": 12, "reserve": 36, "reload": 2.5, "equip": 0.8, "range": 350.0,
+		"spread_base": 0.0, "spread_move": 3.2, "spread_air": 5.0, "spread_burst": 0.0,
+		"length": 1.02, "pos": Vector3(0.30, -0.25, -0.72), "rot": Vector3(0.0, -8.0, -3.0),
+		"muzzle": Vector3(0.2, -0.17, -1.10), "price": 2250,
+	})
+
+	_gun("bucky", "BUCKY", {
+		"slot": "primary", "auto": false, "rate": 1.1, "head": 34.0, "body": 17.0, "leg": 14.0,
+		"mag": 5, "reserve": 20, "reload": 2.5, "equip": 0.8, "range": 55.0,
+		"spread_base": 2.8, "spread_move": 3.4, "spread_air": 4.5, "spread_burst": 0.0,
+		"length": 0.82, "pos": Vector3(0.30, -0.25, -0.68), "rot": Vector3(0.0, -8.0, -3.0),
+		"muzzle": Vector3(0.17, -0.15, -0.90), "price": 850,
+	})
+
+	_gun("judge", "JUDGE", {
+		"slot": "primary", "auto": true, "rate": 3.5, "head": 34.0, "body": 17.0, "leg": 14.0,
+		"mag": 7, "reserve": 21, "reload": 2.8, "equip": 0.9, "range": 60.0,
+		"spread_base": 2.5, "spread_move": 3.3, "spread_air": 4.2, "spread_burst": 0.0,
+		"length": 0.90, "pos": Vector3(0.30, -0.25, -0.70), "rot": Vector3(0.0, -8.0, -3.0),
+		"muzzle": Vector3(0.18, -0.16, -0.94), "price": 1850,
+	})
+
+	_gun("ares", "ARES", {
+		"slot": "primary", "auto": true, "rate": 13.0, "head": 72.0, "body": 30.0, "leg": 25.0,
+		"mag": 50, "reserve": 100, "reload": 3.25, "equip": 1.0, "range": 220.0,
+		"spread_base": 0.3, "spread_move": 3.0, "spread_air": 4.2, "spread_burst": 0.08,
+		"length": 1.08, "pos": Vector3(0.32, -0.26, -0.76), "rot": Vector3(0.0, -8.0, -3.0),
+		"muzzle": Vector3(0.20, -0.17, -1.12), "price": 1600,
+	})
+
+	_gun("odin", "ODIN", {
+		"slot": "primary", "auto": true, "rate": 15.6, "head": 95.0, "body": 38.0, "leg": 32.0,
+		"mag": 100, "reserve": 200, "reload": 5.0, "equip": 1.2, "range": 260.0,
+		"spread_base": 0.25, "spread_move": 3.5, "spread_air": 4.5, "spread_burst": 0.05,
+		"length": 1.25, "pos": Vector3(0.34, -0.27, -0.80), "rot": Vector3(0.0, -8.0, -3.0),
+		"muzzle": Vector3(0.22, -0.18, -1.30), "price": 3200,
+	})
+
 	_gun("phantom", "PHANTOM", {
 		"slot": "primary", "auto": true, "rate": 11.0, "head": 156.0, "body": 39.0, "leg": 33.0,
 		"mag": 30, "reserve": 60, "reload": 2.5, "equip": 0.8, "range": 300.0,
