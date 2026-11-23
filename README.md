@@ -52,7 +52,7 @@ Cada mapa tem paleta de céu/névoa/sol, dimensão, seed dos props e cobertura p
 - **Spike Rush**: tu + 2 aliados (ataque) contra 3 defensores. Chega a um site, segura `F` 4 s para
   plantar, defende 45 s; a defesa tenta desarmar (6 s). Primeira equipa a **5 rondas** ganha.
 - **Deathmatch**: respawns infinitos, primeira equipa a **20 eliminações**.
-- **Fase de compra** (9 s) com loja (`B` e teclas 1–6), créditos por ronda e por kill.
+- **Fase de compra** (9 s) com loja (`B`), arsenal alargado, créditos por ronda e por kill. No modo competitivo o jogador começa sem escudo e pode comprar 50 pontos de armadura.
 - Cronómetro, placar de equipas, estado do spike, barra de plantação/desarme, killfeed, placar no `Tab`
   e ecrã final com resultado.
 
@@ -60,10 +60,20 @@ Cada mapa tem paleta de céu/névoa/sol, dimensão, seed dos props e cobertura p
 | Arma | Tipo | Preço | Dano (cabeça/corpo/pernas) |
 |---|---|---|---|
 | Classic | pistola | 0 | 78 / 26 / 22 |
+| Shorty | escopeta | 300 | 24 / 12 / 10 por projétil |
+| Frenzy | pistola automática | 450 | 78 / 26 / 22 |
+| Ghost | pistola | 500 | 105 / 30 / 25 |
 | Sheriff | pistola | 800 | 159 / 55 / 46 |
+| Stinger | SMG | 1100 | 67 / 27 / 23 |
+| Bucky | escopeta | 850 | 34 / 17 / 14 por projétil |
+| Judge | escopeta automática | 1850 | 34 / 17 / 14 por projétil |
+| Ares | metralhadora | 1600 | 72 / 30 / 25 |
+| Bulldog | rifle | 2100 | 115 / 35 / 30 |
+| Guardian | rifle semiautomático | 2250 | 195 / 65 / 49 | 159 / 55 / 46 |
 | Spectre | SMG | 1600 | 78 / 26 / 22 |
 | Vandal | rifle | 2900 | 160 / 40 / 34 |
 | Phantom | rifle | 2900 | 156 / 39 / 33 |
+| Odin | metralhadora | 3200 | 95 / 38 / 32 |
 | Operator | sniper | 4700 | 255 / 150 / 120 |
 | Faca | corpo a corpo | — | 50 / 150 (forte) |
 
@@ -98,7 +108,7 @@ O projeto começa a usar C# de forma gradual, sem converter o jogo inteiro:
 3. Abrir o projeto e compilar a solução C# pelo editor Godot antes de testar a IA.
 4. Confirmar que não existem erros no painel **Output**.
 
-O projeto C# está configurado em `vava.csproj`. A primeira integração é pequena de propósito: permite validar a compilação e a comunicação antes de migrar decisões mais complexas dos bots.
+O projeto C# está configurado em `vava.csproj`. A IA híbrida já usa C# para pontuar alvos por distância, estabilidade, marcação e vida restante, além de ajustar o tempo de reação. A perceção, a navegação, a física e a apresentação continuam em GDScript.
 
 ## Como correr
 
