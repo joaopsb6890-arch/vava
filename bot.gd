@@ -440,6 +440,10 @@ func _acquire_target():
 	if best != target:
 		target = best
 		reaction_t = reaction_time + randf() * 0.18
+		if bot_brain != null and best != null:
+			var mark_value = best.get("mark_t")
+			var pressure := 0.5 if mark_value != null and float(mark_value) > 0.0 else 0.0
+			reaction_t = float(bot_brain.call("AdjustReaction", reaction_t, pressure))
 		burst_left = randi_range(3, 6)
 		fire_t = 0.0
 		if best != null:
