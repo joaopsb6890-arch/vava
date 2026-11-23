@@ -69,6 +69,19 @@ Cada mapa tem paleta de céu/névoa/sol, dimensão, seed dos props e cobertura p
 
 ---
 
+## VAVA 2.0 — melhorias em desenvolvimento
+
+Esta versão inclui uma primeira passagem de melhorias sobre o projeto existente:
+
+- Modelos procedurais dos bots com mais equipamento tático e detalhes nas armas.
+- Modelos provisórios das armas em primeira pessoa com mais componentes visuais.
+- Movimento de câmara com inércia subtil para dar mais sensação de peso ao FPS.
+- Mapas com novos detalhes de rota, caixas técnicas, sinalização e marcadores nos sites.
+- HUD com identificação própria para o registo de combate.
+- Ajustes de objetivos dos bots no início da fase de combate.
+
+Estas alterações estão numa branch de desenvolvimento e precisam de ser testadas no Godot 4.7 antes de serem integradas na versão principal.
+
 ## Como correr
 
 1. Abre o **Godot 4.7**.
