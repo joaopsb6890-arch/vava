@@ -1,6 +1,6 @@
 # VAVA — Protocolo Tático
 
-Jogo de tiro tático em primeira pessoa inspirado em **Valorant**, feito **100% em GDScript** para **Godot 4.7**.
+Jogo de tiro tático em primeira pessoa inspirado em **Valorant**, feito com arquitetura híbrida **GDScript + C#** para **Godot 4.7 .NET**.
 
 Não existe uma única imagem de interface: lobby, cards de agente, ícones de habilidades, minimapa,
 radar, HUD, mira, loja, modelos 3D das armas, corpos dos NPCs e os mapas são **construídos por código**
